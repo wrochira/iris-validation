@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Validation Report</title>
+
+	<!-- Stylesheets -->
+	<link href="css/minimal.css" rel="stylesheet">
+	<!-- Global variables for SVG JavaScript -->
+	<script src="js/globals.js"></script>
+	<!-- General interaction Javascript -->
+	<script src="js/interaction.js"></script>
+</head>
+
+<body>
+	<!-- Header -->
+	<nav class="navbar navbar-fixed-top" id="header">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<div class="brand" style="float: left">
+					<a href=""><span class="hidden-xs-down m-r-3" style="margin-left: 25px;">Validation Report</span></a>
+					<a href="javascript:scrollToId('row-1');"><span class="lead" style="margin-right: 20px;">Charts</span></a>
+					<a href="javascript:scrollToId('row-3');"><span class="lead" style="margin-right: 20px;">Tabulated Data</span></a>
+					<a href="javascript:scrollToId('row-4');"><span class="lead" style="margin-right: 20px;">Suggested Actions</span></a>
+				</div>
+				<div class="brand" style="float: right">
+					<a href="javascript:console.log('Configuration');"><span class="lead" style="margin-right: 15px;">Configure</span></a>
+				</div>
+			</div>
+		</div>
+	</nav>
+
+	<!-- Page-content wrapper -->
+	<div id="page-content-wrapper">
+		<div class="container-fluid">
+			<!-- 1st row -->
+			<div class="row" id="row-1">
+				<div class="col-lg-6" id="radial-view">
+					<div class="card card-block">
+						<h4 class="card-title m-b-2">Chain View</h4>
+INJECTION_POINT_1
+						<div align="right">
+							<a href="#" id="radial-toggle-button" onclick="toggleFullscreen();" style="text-decoration: none;"><h4>↗</h4></a>
+						</div>
+						<div align="center" style="margin-top: -25px;">
+INJECTION_POINT_2
+						</div>
+					</div>
+				</div>
+				<div class="col-lg-6" id="residue-view">
+					<div class="card card-block">
+						<h4 class="card-title m-b-2">Residue Metrics</h4>
+						<h6 id="residue-summary">Select a residue...</h6>
+						<div class="col-lg-12" id="radar-chart-div" align="center">
+INJECTION_POINT_3
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 2nd row -->
+			<div class="row" id="row-3">
+				<div class="col-md-12">
+					<div class="card card-block">
+						<h4 class="card-title">Tabulated Data</h4>
+						<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>
+					</div>
+				</div>
+			</div>
+
+			<!-- 3rd row -->
+			<div class="row m-b-2" id="row-2">
+				<div class="col-lg-6">
+					<div class="card card-block">
+						<h4 class="card-title">Suggested Actions C1</h4>
+						<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>
+					</div>
+				</div>
+				<div class="col-lg-6">
+					<div class="card card-block">
+						<h4 class="card-title">Suggested Actions C2</h4>
+						<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</body>
+</html>
