@@ -9,63 +9,75 @@ function scrollToId(elementId) {
 function toggleFullscreen() {
 	if (chartZoomed) {
 		chartZoomed = false;
-		document.getElementById('radial-view').className = 'col-lg-6';
-		document.getElementById('residue-view').className = 'col-lg-6';
-		document.getElementById('radial-toggle-button').children[0].innerHTML = '↗';
+		document.getElementById('chain-view').className = 'col-lg-7';
+		document.getElementById('residue-view').className = 'col-lg-5';
+		document.getElementById('toggle-button').children[0].innerHTML = '&#8599;';
 	} else {
 		chartZoomed = true;
-		document.getElementById('radial-view').className = 'col-lg-8';
+		document.getElementById('chain-view').className = 'col-lg-8';
 		document.getElementById('residue-view').className = 'col-lg-4';
-		document.getElementById('radial-toggle-button').children[0].innerHTML = '↙';
+		document.getElementById('toggle-button').children[0].innerHTML = '&#8601;';
 	}
 }
 
-function setChain(chainID) {
-	let radialCharts = document.querySelectorAll('[id^=radial-chart-]');
-	for (var i = 0; i < radialCharts.length; ++i) {
-		radialCharts[i].style.display = 'none';
-		if (radialCharts[i].id === 'radial-chart-' + chainID) {
-			radialCharts[i].style.display = '';
+function setConcentric(chartID) {
+	segmentDocked = true;
+	let barCharts = document.querySelectorAll('[id^=bar-chart-]');
+	for (var i = 0; i < barCharts.length; ++i) {
+		barCharts[i].style.display = 'none';
+		if (barCharts[i].id === 'bar-chart-' + chartID) {
+			barCharts[i].style.display = '';
+		}
+	}
+	let concentricCharts = document.querySelectorAll('[id^=concentric-chart-]');
+	for (var i = 0; i < concentricCharts.length; ++i) {
+		concentricCharts[i].style.display = 'none';
+		if (concentricCharts[i].id === 'concentric-chart-' + chartID) {
+			concentricCharts[i].style.display = '';
 		}
 	}
 	let selectorButtons = document.querySelectorAll('[id^=chain-button-]');
 	for (var i = 0; i < selectorButtons.length; ++i) {
 		selectorButtons[i].style['color'] = null;
-		if (selectorButtons[i].id === 'chain-button-' + chainID) {
+		if (selectorButtons[i].id === 'chain-button-' + chartID) {
 			selectorButtons[i].style['color'] = 'rgb(150,150,150)';
 		}
 	}
 }
 
-function handleChain(actionID, chainID, residueID) {
-	let residue = protein[chainID][residueID];
-	let residueSeg = document.getElementById('radial-chart-' + chainID).getElementById('seg' + residueID);
-	// On click
+function handleSegment(actionID, chainID, residueID, gapDegrees) {
+	//let residue = protein[chainID][residueID];
 	if (actionID === 1) {
-		document.getElementById('residue-summary').innerHTML = 'Chain ' + (chainID+1) + ', Residue ' + (residueID+1) + ' (' + residue.aa + ')';
-		if (lastClicked) {
-			let lastClickedSeg = document.getElementById('radial-chart-' + lastClicked.chainID).getElementById('seg' + lastClicked.residueID);
-			lastClickedSeg.setAttribute('stroke-opacity', 0);
-			lastClickedSeg.setAttribute('stroke-width', 1);
-		}
-		residueSeg.setAttribute('stroke-opacity', 1);
-		residueSeg.setAttribute('stroke-width', 3);
-		setRadarChart(residue.metrics);
-		lastClicked = { 'chainID' : chainID, 'residueID' : residueID, 'residue' : residue }
-	// On mouse over
-	} else if (actionID === 2) {
-		residueSeg.setAttribute('fill-opacity', 0.25);
-	// On mouse out
-	} else if (actionID === 3) {
-		residueSeg.setAttribute('fill-opacity', 0);
-		if (lastClicked) { document.getElementById('residue-summary').innerHTML = 'Chain ' + (lastClicked.chainID+1) + ', Residue ' + (lastClicked.residueID+1) + ' (' + lastClicked.residue.aa + ')'; }
+		segmentDocked = false;
 	}
-}
-
-function handleSegment(actionID, chainID, residueID) {
-	let residue = protein[chainID][residueID];
-	let mainSegment = document.getElementById('segment' + chainID);
-	mainSegment.setAttribute('transform', 'rotate(' + 360/protein[chainID].length*residueID + ', 500, 500' + ')');
+	else if (actionID === 2 && !segmentDocked) {
+		let mainSegment = document.getElementById('segment' + chainID);
+		let startIndex = Math.floor(residueID-sidepanelHeight/2);
+		let endIndex = Math.floor(residueID+sidepanelHeight-1-sidepanelHeight/2);
+		if (startIndex >= 0 && endIndex < protein[chainID].length) {
+			// Good.
+		}
+		else if (startIndex < 0) {
+			startIndex = 0;
+			endIndex = sidepanelHeight-1;
+		}
+		else {
+			startIndex = protein[chainID].length-sidepanelHeight;
+			endIndex = protein[chainID].length-1;
+		}
+		for (var i = 0; i < protein[chainID].length; i++) {
+			let label = document.getElementById('residue-label-' + chainID + '-' + i);
+			label.setAttribute('opacity', 0);
+		};
+		mainSegment.setAttribute('transform', 'rotate(' + (360-gapDegrees)/protein[chainID].length*startIndex + ', 500, 500' + ')');
+		let startLabel = document.getElementById('residue-label-' + chainID + '-' + startIndex);
+		let endLabel = document.getElementById('residue-label-' + chainID + '-' + endIndex.toString());
+		startLabel.setAttribute('opacity', 1);
+		endLabel.setAttribute('opacity', 1);
+	}
+	else if (actionID === 3) {
+		segmentDocked = true;
+	}
 }
 
 function handleRadar(actionID, metricID) {
@@ -74,6 +86,7 @@ function handleRadar(actionID, metricID) {
 	let floatingLabelText = document.getElementById('floating-label-text');
 	// On mouse over
 	if (actionID === 2) {
+		console.log(lastClicked)
 		floatingLabelText.innerHTML = lastClicked.residue.metrics[metricID];
 		floatingLabel.setAttribute('transform', 'translate(' + (parseInt(metricPoint.getAttribute('cx'))) + ', ' + (parseInt(metricPoint.getAttribute('cy'))-30) + ')');
 		floatingLabel.setAttribute('opacity', 1);
@@ -92,7 +105,10 @@ function coordsFromAngle(centre, angle, pointRadius, adj=[0, 0]) {
 	return [Math.round(x1, 2), Math.round(y1, 2)];
 }
 
-function setRadarChart(metricValues) {
+function setRadarChart(chainID, residueID) {
+	let residue = protein[chainID][residueID];
+	let metricNames = Object.values(residue['metrics-absolute']);
+	let metricValues = Object.values(residue['metrics-absolute']);
 	let radarChart = document.getElementById('radar-chart');
 	let canvas = [parseInt(radarChart.getAttribute('viewBox').split(' ')[2]), parseInt(radarChart.getAttribute('viewBox').split(' ')[3])];
 	let centre = [canvas[0]/2, canvas[1]/2];
