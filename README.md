@@ -1,2 +1,2 @@
-# Iris-report
+# Iris-Report
 Package to generate an HTML report of per-residue multi-metric analyses for a model during macromolecular structural validation
