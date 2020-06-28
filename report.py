@@ -27,8 +27,6 @@ with open(path.join(path.dirname(path.realpath(__file__)), 'template/css/minimal
     CSS_MINIFIED = infile.read()
 with open(path.join(path.dirname(path.realpath(__file__)), 'template/css/compat.css'), 'r') as infile:
     CSS_COMPAT = infile.read()
-with open(path.join(path.dirname(path.realpath(__file__)), 'template/css/pane.css'), 'r') as infile:
-    CSS_PANE = infile.read()
 
 
 def _load_css_minimal():
@@ -147,7 +145,7 @@ def report_from_data(chart_data, output_dir, mode='', js_old=False):
         colourDefinition = ' color: rgb(150,150,150);' if chain_id == 0 else ''
         ip1_html += '            <div style="float: left; margin-right: 20px;">\n'
         #ip1_html += '              <a href="#" id="chain-button-' + str(chain_id) + '" onclick="setChain(' + str(chain_id) + ');" style="text-decoration: none;' + colourDefinition + '"><font size="3">Chain ' + chr(65+chain_id) + '</font></a>\n'
-        ip1_html += '              <a id="chain-button-' + str(chain_id) + '" onclick="setChain(' + str(chain_id) + ');" style="text-decoration: none;' + colourDefinition + '"><font size="3">Chain ' + chr(65+chain_id) + '</font></a>\n'
+        ip1_html += '              <a id="chain-button-' + str(chain_id) + '" onclick="setChain(' + str(chain_id) + ');" style="text-decoration: none;' + colourDefinition + '"><font size="4">Chain ' + chr(65+chain_id) + '</font></a>\n'
         ip1_html += '            </div>\n'
     ip2_html = ''.join([ '              ' + iris_chart + '\n' for iris_chart in iris_charts ])[:-1] # [:-1] to remove trailing newline
     #ip3_html = '              ' + radar_chart
@@ -177,11 +175,7 @@ def report_from_data(chart_data, output_dir, mode='', js_old=False):
         outfile.write(js_interaction)
     with open(path.join(output_dir, 'js', 'globals.js'), 'w') as outfile:
         outfile.write(js_globals)
-    if mode == 'pane':
-        with open(path.join(output_dir, 'css', 'pane.css'), 'w') as outfile:
-            outfile.write(CSS_PANE)
-    else:
-        with open(path.join(output_dir, 'css', 'minimal.css'), 'w') as outfile:
-            outfile.write(CSS_MINIFIED)
-        with open(path.join(output_dir, 'css', 'compat.css'), 'w') as outfile:
-            outfile.write(CSS_COMPAT)
+    with open(path.join(output_dir, 'css', 'minimal.css'), 'w') as outfile:
+        outfile.write(CSS_MINIFIED)
+    with open(path.join(output_dir, 'css', 'compat.css'), 'w') as outfile:
+        outfile.write(CSS_COMPAT)

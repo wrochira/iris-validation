@@ -1,20 +1,20 @@
 <!-- Stylesheets -->
-<link href="css/pane.css" rel="stylesheet"/>
+<link href="css/compat.css" rel="stylesheet"/>
 <!-- Global variables for SVG JavaScript -->
 <script src="js/globals.js"></script>
 <!-- General interaction Javascript -->
 <script src="js/interaction.js"></script>
-<div class="iris-row">
-  <div class="col-xs-8" id="chain-view">
-    <div class="card card-block">
-      <h4 class="card-title">Chain View (Iris Chart)
+<div style="height: 90%; position: relative; top: -20px;">
+  <div style="width: 70%; float: left;" id="chain-view">
+    <div>
+      <h4 style="padding-bottom: 10px; border-bottom: 2px solid grey;"><font size="6">Chain View (Iris Chart)</font>
         <div style="float: right; margin-right: 20px;">
-          <label style="margin-right: 10px;"><font size="3">Previous</font></label>
-          <label class="switch">
+          <label style="margin-right: 10px;"><font size="5">Previous</font></label>
+          <label class="mini-switch">
             <input id="model-toggle" type="checkbox" checked="true" onclick="toggleModel()"></input>
-            <span class="slider round"></span>
+            <span class="mini-slider round"></span>
           </label>
-          <label style="margin-left: 10px;"><font size="3">Latest</font></label>
+          <label style="margin-left: 10px;"><font size="5">Latest</font></label>
         </div>
       </h4>
 INJECTION_POINT_1
@@ -23,12 +23,12 @@ INJECTION_POINT_2
       </div>
     </div>
   </div>
-  <div class="col-xs-4" id="residue-view">
-    <div class="card card-block">
-      <h4 class="card-title m-b-2">Residue View</h4>
-      <font size="3" id="residue-summary">Select a residue...</font>
+  <div style="width: 25%; float: right;" id="residue-view">
+    <div>
+      <h4 style="padding-bottom: 10px; border-bottom: 2px solid grey;"><font size="6">Residue View</font></h4>
+      <font size="4" id="residue-summary">Select a residue...</font>
       <p></p>
-      <div class="col-lg-12" id="residue-chart-div" align="center" style="margin-top: -10px;">
+      <div id="residue-chart-div" align="center">
 INJECTION_POINT_3
       </div>
     </div>
