@@ -7,6 +7,21 @@ import requests
 from _defs import *
 
 
+
+def setup():
+    create_data_dirs()
+    load_pdb_report_data()
+    cleanup_all_pdb_redo_dirs()
+
+
+def create_data_dirs():
+    print('Checking data drectories...')
+    for path in (DATA_DIR, PDB_REDO_DATA_DIR, PDB_OUTPUT_DIR, MOLPROBITY_OUTPUT_DIR, PERCENTILES_OUTPUT_DIR, ROTAMER_OUTPUT_DIR, TESTING_OUTPUT_DIR, TIMING_OUTPUT_DIR):
+        if not os.path.isdir(path):
+            os.mkdir(path)
+    print('Done.')
+
+
 def get_available_pdb_ids():
     print('Getting available PDB IDs...')
     pdb_ids = [ ]

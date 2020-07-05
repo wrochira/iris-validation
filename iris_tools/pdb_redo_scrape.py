@@ -9,7 +9,7 @@ import requests
 from multiprocessing import Process, Queue
 
 from _defs import PDB_REDO_DATA_DIR, PDB_REDO_SUFFIXES
-from common import get_available_pdb_ids, load_pdb_report_data, cleanup_all_pdb_redo_dirs
+from common import setup, get_available_pdb_ids, load_pdb_report_data
 
 
 NUM_WORKERS = 16
@@ -83,6 +83,6 @@ def scrape_pdb_redo(retry_failed_ids=True):
 
 
 if __name__ == '__main__':
-    cleanup_all_pdb_redo_dirs()
+    setup()
     PDB_REPORT_VALUES = load_pdb_report_data()
     scrape_pdb_redo()

@@ -3,7 +3,9 @@ Copyright 2020 William Rochira at York Structural Biology Laboratory
 """
 
 import os
+import gzip
 import time
+import pickle
 from multiprocessing import Process, Queue
 
 import numpy as np
@@ -12,7 +14,7 @@ from iris_validation.metrics import generate_metrics_model
 from iris_validation import METRIC_NAMES, RESOLUTION_BIN_NAMES
 
 from _defs import PDB_REDO_DATA_DIR, PERCENTILES_OUTPUT_DIR
-from common import get_available_pdb_ids, load_pdb_report_data, decompress_pdb_redo_dir, cleanup_pdb_redo_dir, cleanup_all_pdb_redo_dirs
+from common import setup, get_available_pdb_ids, load_pdb_report_data, decompress_pdb_redo_dir, cleanup_pdb_redo_dir
 
 
 NUM_WORKERS = 16
@@ -20,6 +22,7 @@ YEAR_THRESHOLD = 2015
 NUM_RESULTS_NEEDED = 10000000
 RESOLUTION_BIN_PERCENTILES = (10, 20, 30, 40, 50, 60, 70, 80, 90)
 OUTPUT_PERCENTILES = tuple([ i+1 for i in range(99) ])
+EXPORT_SERIALISED = True
 
 PDB_IDS = [ ]
 PDB_REPORT_DATA = { }
@@ -147,7 +150,10 @@ def generate_percentiles_data():
             percentile_values = np.percentile(resolution_metric_values, OUTPUT_PERCENTILES)
             METRIC_PERCENTILE_VALUES[metric_name][resolution_bin_id] = percentile_values
         METRIC_PERCENTILE_VALUES[metric_name]['All'] = np.percentile(METRIC_VALUES_ALL[metric_name], OUTPUT_PERCENTILES)
-
+    if EXPORT_SERIALISED:
+        print('Exporting serialised data...')
+        with gzip.open(os.path.join(PERCENTILES_OUTPUT_DIR, 'serialised_metrics.gz'), 'wb') as outfile:
+            pickle.dump(METRIC_VALUES_BINNED, outfile)
 
 def export_percentiles_data():
     if not os.path.isdir(PERCENTILES_OUTPUT_DIR):
@@ -227,7 +233,7 @@ def draw_graphs():
 
 
 if __name__ == '__main__':
-    cleanup_all_pdb_redo_dirs()
+    setup()
     PDB_IDS = get_available_pdb_ids()
     PDB_REPORT_DATA = load_pdb_report_data()
     generate_percentiles_data()

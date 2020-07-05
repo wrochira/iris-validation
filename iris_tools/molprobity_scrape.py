@@ -18,7 +18,7 @@ except ImportError:
     from bs4 import BeautifulSoup
 
 from _defs import MOLPROBITY_OUTPUT_DIR
-from common import get_available_pdb_ids
+from common import setup, get_available_pdb_ids
 
 
 MOLPROBITY_URL = 'http://molprobity.biochem.duke.edu/'
@@ -134,6 +134,7 @@ def get_multi_table(msid, pdb_id):
 
 
 if __name__ == '__main__':
+    setup()
     pdb_ids = get_available_pdb_ids()
     for pdb_id in pdb_ids:
         pdb_id = pdb_id.lower()

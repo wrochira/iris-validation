@@ -10,6 +10,7 @@ import requests
 
 import numpy as np
 
+from common import setup
 from _defs import ROTAMER_OUTPUT_DIR
 
 
@@ -163,5 +164,6 @@ def generate_library():
 
 
 if __name__ == '__main__':
+    setup()
     download_reference_data()
     generate_library()
