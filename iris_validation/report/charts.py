@@ -1,85 +1,111 @@
 """
-Copyright 2020 William Rochira at the University of York
+Copyright 2020 William Rochira at York Structural Biology Laboratory
 """
 
-from hashlib import md5
-from math import pi, cos, sin, ceil, atan2
+from math import pi, cos, sin
 
 import svgwrite
-import numpy as np
 from svgwrite.animate import Animate
 from svgwrite.gradients import LinearGradient
 
 
-# Constants
-COLORS = { 'BLACK' : svgwrite.rgb(0, 0, 0),
-            'VL_GREY' : svgwrite.rgb(200, 200, 200),
-            'L_GREY' : svgwrite.rgb(150, 150, 150),
-            'D_GREY' : svgwrite.rgb(50, 50, 50),
-            'WHITE' : svgwrite.rgb(255, 255, 255),
-            'RED' : svgwrite.rgb(200, 80, 80),
-            'L_RED' : svgwrite.rgb(220, 150, 150),
-            'GREEN' : svgwrite.rgb(50, 200, 50),
-            'L_GREEN' : svgwrite.rgb(150, 220, 150),
-            'BLUE' : svgwrite.rgb(50, 50, 200),
-            'L_BLUE' : svgwrite.rgb(150, 150, 220),
-            'YELLOW' : svgwrite.rgb(250, 250, 50),
-            'L_YELLOW' : svgwrite.rgb(255, 255, 150),
-            'ORANGE' : svgwrite.rgb(250, 200, 50),
-            'L_ORANGE' : svgwrite.rgb(255, 220, 150),
-            'MAGENTA' : svgwrite.rgb(200, 50, 200),
-            'L_MAGENTA' : svgwrite.rgb(220, 150, 220),
-            'CYAN' : svgwrite.rgb(50, 200, 200),
-            'L_CYAN' : svgwrite.rgb(150, 220, 220),
-            'BAR_GREEN' : svgwrite.rgb(90,237,141),
-            'BAR_ORANGE' : svgwrite.rgb(247,212,134),
-            'BAR_RED' : svgwrite.rgb(240,106,111) }
-RING_COLOR_SEQUENCE = [ COLORS['L_GREY'], COLORS['L_GREY'], COLORS['BLUE'], COLORS['ORANGE'], COLORS['CYAN'], COLORS['MAGENTA'], COLORS['ORANGE'] ]
-LIGHT_RING_COLOR_SEQUENCE = [ COLORS['VL_GREY'], COLORS['VL_GREY'], COLORS['L_BLUE'], COLORS['L_ORANGE'], COLORS['L_CYAN'], COLORS['L_MAGENTA'], COLORS['L_ORANGE'] ]
-DISCRETE_COLOR_SEQUENCE = [ COLORS['RED'], COLORS['ORANGE'], COLORS['GREEN'] ]
-BASELINE_POINT_RESOLUTION = 200 # in points
-DEFAULT_IRIS_SETTINGS = { 'ring_names' : None,
-                          'ring_types' : None,
-                          'ring_polarities' : None,
-                          'center_text_1' : None,
-                          'center_text_2' : None,
-                          'center_text_3' : None,
-                          'svg_id' : None,
-                          'svg_hidden' : None,
-                          'animation_length' : 250,
-                          'segment_selector_enabled' : True,
-                          'interaction_segments_enabled' : True,
-                          'apply_markers' : True,
-                          'marker_label' : '',
-                          'marker_color' : COLORS['RED'],
-                          'canvas_size' : (1000, 1000),
-                          'gap': 0.3 }
-# Settings
-MIN_CAP, MAX_CAP = -0.70, 0.25
-# Variables
-CFA_CACHE = { }
+COLORS = { 'BLACK' : 'rgb(0, 0, 0)',
+           'VL_GREY' : 'rgb(200, 200, 200)',
+           'L_GREY' : 'rgb(150, 150, 150)',
+           'D_GREY' : 'rgb(50, 50, 50)',
+           'WHITE' : 'rgb(255, 255, 255)',
+           'RED' : 'rgb(200, 80, 80)',
+           'L_RED' : 'rgb(220, 150, 150)',
+           'GREEN' : 'rgb(50, 200, 50)',
+           'L_GREEN' : 'rgb(150, 220, 150)',
+           'BLUE' : 'rgb(50, 50, 200)',
+           'L_BLUE' : 'rgb(150, 150, 220)',
+           'YELLOW' : 'rgb(250, 250, 50)',
+           'L_YELLOW' : 'rgb(255, 255, 150)',
+           'ORANGE' : 'rgb(250, 200, 50)',
+           'L_ORANGE' : 'rgb(255, 220, 150)',
+           'MAGENTA' : 'rgb(200, 50, 200)',
+           'L_MAGENTA' : 'rgb(220, 150, 220)',
+           'CYAN' : 'rgb(50, 200, 200)',
+           'L_CYAN' : 'rgb(150, 220, 220)',
+           'BAR_GREEN' : 'rgb(90, 237, 141)',
+           'BAR_ORANGE' : 'rgb(247, 212, 134)',
+           'BAR_RED' : 'rgb(240, 106, 111) '}
+
+DEFAULT_SETTINGS_CONCENTRIC = { 'animation_length' : 250,
+                                'apply_markers' : True,
+                                'axis_min' : -0.7,
+                                'axis_max' : 0.25,
+                                'baseline_point_resolution' : 200,
+                                'canvas_size' : (1000, 1000),
+                                'center_text_1' : None,
+                                'center_text_2' : None,
+                                'center_text_3' : None,
+                                'discrete_color_sequence' : ([ COLORS['RED'], COLORS['ORANGE'], COLORS['GREEN'] ]),
+                                'discrete_ring_color' : COLORS['L_GREY'],
+                                'top_gap': 0.3,
+                                'interaction_segments_enabled' : True,
+                                'marker_label' : '',
+                                'marker_color' : COLORS['RED'],
+                                'ring_color_sequence' : (COLORS['CYAN'], COLORS['MAGENTA'], COLORS['BLUE'], COLORS['ORANGE'], COLORS['CYAN'], COLORS['MAGENTA'], COLORS['BLUE'], COLORS['ORANGE']),
+                                'ring_names' : None,
+                                'ring_polarities' : None,
+                                'ring_types' : None,
+                                'segment_function_name' : 'handleSegment',
+                                'segment_selector_enabled' : True,
+                                'svg_id' : 'concentric-chart',
+                                'svg_hidden' : None }
+
+DEFAULT_SETTINGS_RADAR = { 'canvas_size' : (600, 500),
+                           'svg_id' : 'radar',
+                           'svg_hidden' : None }
+
+DEFAULT_SETTINGS_GRID = { 'box_1_label' : '',
+                          'box_2_label' : '',
+                          'bar_label' : '',
+                          'bar_1_label' : '',
+                          'bar_2_label' : '',
+                          'canvas_size' : (400, 1000),
+                          'svg_id' : 'grid',
+                          'svg_hidden' : None }
+
+_CFA_CACHE = { }
 
 
 def _coords_from_angle(center, angle, point_radius, adj=(0, 0), gap=0):
-    global CFA_CACHE
+    global _CFA_CACHE
     arg_string = str([ center, angle, point_radius, adj, gap ])
-    if arg_string in CFA_CACHE:
-        coords = CFA_CACHE[arg_string]
+    if arg_string in _CFA_CACHE:
+        coords = _CFA_CACHE[arg_string]
     else:
         xc, yc = center
         x1 = xc + point_radius * sin(angle + gap/float(2)) + adj[0]
         y1 = yc - point_radius * cos(angle + gap/float(2)) + adj[1]
         coords = (round(x1, 1), round(y1, 1))
-        CFA_CACHE[arg_string] = coords
+        _CFA_CACHE[arg_string] = coords
     return coords
 
-def iris(datapoints, settings={ }):
+
+def concentric(datapoints, settings={ }):
     # Check arguments
+    try:
+        assert len(datapoints) > 0
+        for dp_set in datapoints:
+            for dp in dp_set:
+                if dp is None:
+                    continue
+                if len(set(['continuous', 'discrete' ]) - set(dp.keys())) > 0:
+                    print('ERROR: every datapoint must have at least "continuous" and "discrete" key values defined')
+                    return ''
+    except:
+        print('ERROR: datapoints argument should be a two-dimensional iterable of dictionaries')
+        return ''
+
     num_segments = len(datapoints)
     num_versions = len(datapoints[0])
     num_rings = len(datapoints[0][0]['continuous'])
 
-    for setting_name, setting_default in DEFAULT_IRIS_SETTINGS.items():
+    for setting_name, setting_default in DEFAULT_SETTINGS_CONCENTRIC.items():
         if setting_name not in settings.keys():
             settings[setting_name] = setting_default
 
@@ -87,30 +113,20 @@ def iris(datapoints, settings={ }):
         settings['ring_names'] = [ '' for _ in range(num_rings) ]
     if len(settings['ring_names']) != num_rings:
         print('ERROR: specified number of ring names is inconsistent with the data')
-        return
+        return ''
     if len(settings['ring_types']) is None:
         settings['ring_types'] = [ 'C' for _ in range(num_rings) ]
     if len(settings['ring_types']) != num_rings:
         print('ERROR: specified number of ring types is inconsistent with the data')
-        return
+        return ''
     if settings['ring_polarities'] is None:
         settings['ring_types'] = [ +1 for _ in range(num_rings) ]
     if len(settings['ring_polarities']) != num_rings:
         print('ERROR: specified number of ring polarities is inconsistent with the data')
-        return
-    if len(np.shape(datapoints)) != 2:
-        print('ERROR: datapoints argument should be two-dimensional')
-        return
-    for dp_set in datapoints:
-        for dp in dp_set:
-            if dp is None:
-                continue
-            if len(set(['continuous', 'discrete' ]) - set(dp.keys())) > 0:
-                print('ERROR: every datapoint must have at least "continuous" and "discrete" key values defined')
-                return
+        return ''
 
     # Useful calculations
-    gap = float(settings['gap'])
+    gap = float(settings['top_gap'])
     sizes = (min(settings['canvas_size'])//100, min(settings['canvas_size'])//60)
     center = (settings['canvas_size'][0]//2, settings['canvas_size'][1]//2)
     full_radius = min(settings['canvas_size'])//2 - 10
@@ -129,13 +145,13 @@ def iris(datapoints, settings={ }):
     # If the user doesn't set an ID for the chart, then it shouldn't have an ID defined in the XML. But, the svg_id variable still needs to be
     # defined for later, to make sure there's something to prepend to the IDs of any child elements that *do* need IDs.
     if settings['svg_id'] is None:
-        settings['svg_id'] = 'Iris'
+        settings['svg_id'] = 'concentric'
     else:
         dwg.attribs['id'] = settings['svg_id']
     if settings['svg_hidden']:
         dwg.attribs['style'] = 'display: none;'
 
-    # Get means for continuous metrics; Get ranges for discrete metrics
+    # Get means for continuous metrics; get ranges for discrete metrics
     ring_averages = [ ]
     ring_categories = [ ]
     for ring_id in range(num_rings):
@@ -201,9 +217,9 @@ def iris(datapoints, settings={ }):
                 else:
                     plot_magnitude = 0
                     if magnitude > 0 and ring_magnitude_minmax[1] != 0:
-                        plot_magnitude = magnitude / ring_magnitude_minmax[1] * MAX_CAP
+                        plot_magnitude = magnitude / ring_magnitude_minmax[1] * settings['axis_max']
                     elif magnitude < 0 and ring_magnitude_minmax[0] != 0:
-                        plot_magnitude = magnitude / ring_magnitude_minmax[0] * MIN_CAP
+                        plot_magnitude = magnitude / ring_magnitude_minmax[0] * settings['axis_min']
                 plot_magnitudes_set.append(plot_magnitude)
             ring_plot_magnitudes.append(plot_magnitudes_set)
         plot_magnitudes_by_rsv.append(ring_plot_magnitudes)
@@ -244,7 +260,7 @@ def iris(datapoints, settings={ }):
                         segment_opacity = 0.5
                     else:
                         category_id = dp['discrete'][ring_id]
-                        segment_color = DISCRETE_COLOR_SEQUENCE[category_id]
+                        segment_color = settings['discrete_color_sequence'][category_id]
                         segment_opacity = 0.5
                         if category_id == 0:
                             segment_opacity = 1
@@ -260,18 +276,18 @@ def iris(datapoints, settings={ }):
     # Draw plot points
     for ring_id in range(num_rings):
         baseline_circle_points = [ ]
-        for i in range(BASELINE_POINT_RESOLUTION + 1):
-            point_angle = (BASELINE_POINT_RESOLUTION - i) * (2*pi - gap) / float(BASELINE_POINT_RESOLUTION)
+        for i in range(settings['baseline_point_resolution'] + 1):
+            point_angle = (settings['baseline_point_resolution'] - i) * (2*pi - gap) / float(settings['baseline_point_resolution'])
             point_radius = (ring_id + 2) * division_size
             baseline_circle_points.append(_coords_from_angle(center, point_angle, point_radius, gap=gap))
         # Continuous lines
         if settings['ring_types'][ring_id] == 'C':
             line_points = line_points_by_rvs[ring_id][-1] + baseline_circle_points
             ring_line = dwg.polyline(line_points,
-                                     stroke=RING_COLOR_SEQUENCE[ring_id],
+                                     stroke=settings['ring_color_sequence'][ring_id],
                                      stroke_width=2,
                                      stroke_opacity=1,
-                                     fill=LIGHT_RING_COLOR_SEQUENCE[ring_id],
+                                     fill=settings['ring_color_sequence'][ring_id],
                                      fill_opacity=0.2,
                                      id=settings['svg_id'] + '-contline-' + str(ring_id))
             for version_id in range(num_versions):
@@ -350,14 +366,15 @@ def iris(datapoints, settings={ }):
 
     # Draw axes
     for ring_id, ring_name in enumerate(settings['ring_names']):
+        ring_color = settings['ring_color_sequence'][ring_id] if settings['ring_types'][ring_id] == 'C' else settings['discrete_ring_color']
         dwg.add(dwg.circle(r=(ring_id+2)*division_size,
                            center=center,
                            fill_opacity=0,
-                           stroke=RING_COLOR_SEQUENCE[ring_id],
+                           stroke=ring_color,
                            stroke_width=1,
                            stroke_opacity=1))
         dwg.add(dwg.polyline([ _coords_from_angle(center, (gap/float(25))*(i-(20-1)/float(2)), (ring_id+2)*division_size) for i in range(20) ],
-                         stroke=RING_COLOR_SEQUENCE[ring_id],
+                         stroke=ring_color,
                          stroke_width=3,
                          stroke_opacity=1,
                          fill_opacity=0))
@@ -367,7 +384,6 @@ def iris(datapoints, settings={ }):
                          font_family='Arial',
                          text_anchor='middle',
                          alignment_baseline='central'))
-
 
     # Draw segment selector (if required)
     if settings['segment_selector_enabled']:
@@ -396,9 +412,9 @@ def iris(datapoints, settings={ }):
                                   stroke_opacity=0,
                                   fill=COLORS['L_GREY'],
                                   fill_opacity=0,
-                                  onmousedown='handleSegment(1, ' + str(i) +');',
-                                  onmouseover='handleSegment(2, ' + str(i) +');',
-                                  onmouseup='handleSegment(3, ' + str(i) +');',
+                                  onmousedown=settings['segment_function_name'] + '(1, ' + str(i) +');',
+                                  onmouseover=settings['segment_function_name'] + '(2, ' + str(i) +');',
+                                  onmouseup=settings['segment_function_name'] + '(3, ' + str(i) +');',
                                   id=settings['svg_id'] + '-intseg-' + str(i)))
         dwg.add(dwg.circle(r=1.5*division_size,
                            center=center,
@@ -409,8 +425,8 @@ def iris(datapoints, settings={ }):
     # Draw center text
     if settings['center_text_1'] is not None:
         dwg.add(dwg.text(text=settings['center_text_1'],
-                         insert=(center[0], center[1]-1*sizes[1]),
-                         font_size=sizes[1],
+                         insert=(center[0], center[1]-1.5*sizes[1]),
+                         font_size=1.5*sizes[1],
                          font_family='Arial',
                          font_weight='bold',
                          text_anchor='middle',
@@ -433,24 +449,36 @@ def iris(datapoints, settings={ }):
     return dwg.tostring()
 
 
-def radar(names, svg_id='radar-chart', canvas=(600, 500)):
+def radar(axis_names, settings={ }):
+    # Check settings
+    for setting_name, setting_default in DEFAULT_SETTINGS_RADAR.items():
+        if setting_name not in settings.keys():
+            settings[setting_name] = setting_default
+
     # Useful calculations
-    num_metrics = len(names)
-    center = (canvas[0]//2, canvas[1]//2)
-    sizes = (min(canvas)//50, min(canvas)//40)
+    num_metrics = len(axis_names)
+    center = (settings['canvas_size'][0]//2, settings['canvas_size'][1]//2)
+    sizes = (min(settings['canvas_size'])//50, min(settings['canvas_size'])//40)
     angle_delta = 2*pi / float(num_metrics)
-    axis_radius = min(canvas)//2 - min(canvas)//20
+    axis_radius = min(settings['canvas_size'])//2 - min(settings['canvas_size'])//20
 
     # Initialise drawing
     dwg = svgwrite.Drawing(profile='full')
 
     # Set viewbox attribute for scaling
-    dwg.attribs['viewBox'] = '0 0 ' + ' '.join([ str(x) for x in canvas ])
+    dwg.attribs['viewBox'] = '0 0 ' + ' '.join([ str(x) for x in settings['canvas_size'] ])
     dwg.attribs['width'] = '100%'
     dwg.attribs['height'] = '100%'
 
     # Set HTML attributes for interaction
-    dwg.attribs['id'] = svg_id
+    # If the user doesn't set an ID for the chart, then it shouldn't have an ID defined in the XML. But, the svg_id variable still needs to be
+    # defined for later, to make sure there's something to prepend to the IDs of any child elements that *do* need IDs.
+    if settings['svg_id'] is None:
+        settings['svg_id'] = 'radar'
+    else:
+        dwg.attribs['id'] = settings['svg_id']
+    if settings['svg_hidden']:
+        dwg.attribs['style'] = 'display: none;'
 
     # Axes
     for i in range(num_metrics):
@@ -466,10 +494,10 @@ def radar(names, svg_id='radar-chart', canvas=(600, 500)):
 
     # Axis labels
     for i in range(num_metrics):
-        l_width, l_height = sizes[1]/float(2) * len(names[i]), sizes[1]
+        l_width, l_height = sizes[1]/float(2) * len(axis_names[i]), sizes[1]
         vert_adj = l_height if pi/2 < angle_delta*i < 3*pi/2 else -l_height if 3*pi/2 < angle_delta*i or angle_delta*i >= 0 else 0
         horiz_adj = l_width/2 if 0 < angle_delta*i < pi else -l_width/2 if pi < angle_delta*i < 2*pi else 0
-        dwg.add(dwg.text(text=names[i],
+        dwg.add(dwg.text(text=axis_names[i],
                          insert=_coords_from_angle(center, angle_delta*i, axis_radius, adj=(horiz_adj, vert_adj)),
                          font_size=sizes[1],
                          font_family='Arial',
@@ -487,14 +515,14 @@ def radar(names, svg_id='radar-chart', canvas=(600, 500)):
                          fill=COLORS['D_GREY']))
 
     # Dots, labels, and connecting polygon (initialised hidden)
-    dwg.add(dwg.polygon(points=[ _coords_from_angle(center, angle_delta*i, axis_radius/2) for i in range(len(names)) ],
+    dwg.add(dwg.polygon(points=[ _coords_from_angle(center, angle_delta*i, axis_radius/2) for i in range(len(axis_names)) ],
                         fill=COLORS['WHITE'],
                         fill_opacity=0,
                         stroke=COLORS['BLACK'],
                         stroke_width=1,
                         stroke_opacity=0,
                         id='connecting-polygon'))
-    for i in range(len(names)):
+    for i in range(len(axis_names)):
         dwg.add(dwg.circle(r=sizes[0],
                            center=center,
                            fill=COLORS['L_GREY'],
@@ -537,16 +565,22 @@ def radar(names, svg_id='radar-chart', canvas=(600, 500)):
 
     return dwg.tostring()
 
-def residue(svg_id='residue-chart', canvas=(400, 1000)):
+
+def grid(settings={ }):
+    # Check arguments
+    for setting_name, setting_default in DEFAULT_SETTINGS_GRID.items():
+        if setting_name not in settings.keys():
+            settings[setting_name] = setting_default
+
     # Useful calculations
     # Bounds defined as (x0, y0, x1, y1)
-    sizes = (min(canvas)//50, min(canvas)//40)
+    sizes = (min(settings['canvas_size'])//50, min(settings['canvas_size'])//40)
     margin = 2*sizes[0]
     bar_width = 15*sizes[0]
-    tickbox_1_bounds = (margin, margin, canvas[0]*0.45, 15*sizes[0])
-    tickbox_2_bounds = (canvas[0]*0.55, margin, canvas[0]-margin, 15*sizes[0])
+    tickbox_1_bounds = (margin, margin, settings['canvas_size'][0]*0.45, 15*sizes[0])
+    tickbox_2_bounds = (settings['canvas_size'][0]*0.55, margin, settings['canvas_size'][0]-margin, 15*sizes[0])
     divider_line_y = 22.5*sizes[0]
-    bar_charts_bounds = (margin+3*sizes[0], 28*sizes[0], canvas[0]-margin, canvas[1]-10*sizes[0])
+    bar_charts_bounds = (margin+3*sizes[0], 28*sizes[0], settings['canvas_size'][0]-margin, settings['canvas_size'][1]-10*sizes[0])
     bar_1_x = bar_charts_bounds[0] + (bar_charts_bounds[2]-bar_charts_bounds[0])*1/4
     bar_2_x = bar_charts_bounds[0] + (bar_charts_bounds[2]-bar_charts_bounds[0])*3/4
 
@@ -554,12 +588,19 @@ def residue(svg_id='residue-chart', canvas=(400, 1000)):
     dwg = svgwrite.Drawing(profile='full')
 
     # Set viewbox attribute for scaling
-    dwg.attribs['viewBox'] = '0 0 ' + ' '.join([ str(x) for x in canvas ])
+    dwg.attribs['viewBox'] = '0 0 ' + ' '.join([ str(x) for x in settings['canvas_size'] ])
     dwg.attribs['width'] = '95%'
     dwg.attribs['height'] = '95%'
 
     # Set HTML attributes for interaction
-    dwg.attribs['id'] = svg_id
+    # If the user doesn't set an ID for the chart, then it shouldn't have an ID defined in the XML. But, the svg_id variable still needs to be
+    # defined for later, to make sure there's something to prepend to the IDs of any child elements that *do* need IDs.
+    if settings['svg_id'] is None:
+        settings['svg_id'] = 'grid'
+    else:
+        dwg.attribs['id'] = settings['svg_id']
+    if settings['svg_hidden']:
+        dwg.attribs['style'] = 'display: none;'
 
     # Checkboxes
     dwg.add(dwg.polygon(points=[ (tickbox_1_bounds[0], tickbox_1_bounds[1]),
@@ -582,7 +623,7 @@ def residue(svg_id='residue-chart', canvas=(400, 1000)):
                       text_anchor='middle',
                       alignment_baseline='central',
                       id='checkbox-1-text'))
-    dwg.add(dwg.text('Ramachandran',
+    dwg.add(dwg.text(settings['box_1_label'],
                       insert=((tickbox_1_bounds[0]+tickbox_1_bounds[2])/2, tickbox_1_bounds[3]+25),
                       font_size=1.8*sizes[1],
                       font_family='Arial',
@@ -610,7 +651,7 @@ def residue(svg_id='residue-chart', canvas=(400, 1000)):
                       text_anchor='middle',
                       alignment_baseline='central',
                       id='checkbox-2-text'))
-    dwg.add(dwg.text('Rotamer',
+    dwg.add(dwg.text(settings['box_2_label'],
                       insert=((tickbox_2_bounds[0]+tickbox_2_bounds[2])/2, tickbox_2_bounds[3]+25),
                       font_size=1.8*sizes[1],
                       font_family='Arial',
@@ -621,7 +662,7 @@ def residue(svg_id='residue-chart', canvas=(400, 1000)):
 
     # Divider line
     dwg.add(dwg.line((margin, divider_line_y),
-                     (canvas[0]-margin, divider_line_y),
+                     (settings['canvas_size'][0]-margin, divider_line_y),
                      stroke=COLORS['L_GREY'],
                      stroke_width=2))
 
@@ -636,15 +677,15 @@ def residue(svg_id='residue-chart', canvas=(400, 1000)):
                         stroke_width=2,
                         stroke_opacity=1,
                         id='bar-charts-container'))
-    dwg.add(dwg.text('Percentiles',
-                      insert=(canvas[0]/2, bar_charts_bounds[3]+6*sizes[0]),
+    dwg.add(dwg.text(settings['bar_label'],
+                      insert=(settings['canvas_size'][0]/2, bar_charts_bounds[3]+6*sizes[0]),
                       font_size=1.8*sizes[1],
                       font_family='Arial',
                       fill=COLORS['BLACK'],
                       fill_opacity=1,
                       text_anchor='middle',
                       alignment_baseline='central'))
-    dwg.add(dwg.text('Avg. B-factor',
+    dwg.add(dwg.text(settings['bar_1_label'],
                       insert=(bar_1_x, bar_charts_bounds[3]+20),
                       font_size=1.8*sizes[1],
                       font_family='Arial',
@@ -652,7 +693,7 @@ def residue(svg_id='residue-chart', canvas=(400, 1000)):
                       fill_opacity=1,
                       text_anchor='middle',
                       alignment_baseline='central'))
-    dwg.add(dwg.text('Sidechain fit',
+    dwg.add(dwg.text(settings['bar_2_label'],
                       insert=(bar_2_x, bar_charts_bounds[3]+20),
                       font_size=1.8*sizes[1],
                       font_family='Arial',
@@ -768,7 +809,9 @@ def residue(svg_id='residue-chart', canvas=(400, 1000)):
                                               (bar_2_x+bar_width//2, bar_charts_bounds[3]) ],
                                     fill=COLORS['WHITE'],
                                     fill_opacity=1,
-                                    stroke_opacity=0))
+                                    stroke=COLORS['BLACK'],
+                                    stroke_width=2,
+                                    stroke_opacity=1))
     box_plot_group_2.add(dwg.polygon(points=[ (bar_2_x-bar_width//2, bar_charts_bounds[1]+80),
                                               (bar_2_x-bar_width//2, bar_charts_bounds[3]-80),
                                               (bar_2_x+bar_width//2, bar_charts_bounds[3]-80),

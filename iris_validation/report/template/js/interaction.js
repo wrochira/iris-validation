@@ -1,13 +1,13 @@
 /*
-Copyright 2020 William Rochira at the University of York
+Copyright 2020 William Rochira at York Structural Biology Laboratory
 */
 
-COLORS = {  'L_GREY' : 'rgb(150,150,150)',
-            'VL_GREY' : 'rgb(200,200,200)',
-            'WHITE' : 'rgb(255,255,255)',
-            'BAR_GREEN' : 'rgb(90,237,141)',
-            'BAR_ORANGE' : 'rgb(247,212,134)',
-            'BAR_RED' : 'rgb(240,106,111)' }
+COLORS = {  'L_GREY' : 'rgb(150, 150, 150)',
+            'VL_GREY' : 'rgb(200, 200, 200)',
+            'WHITE' : 'rgb(255, 255, 255)',
+            'BAR_GREEN' : 'rgb(90, 237, 141)',
+            'BAR_ORANGE' : 'rgb(247, 212, 134)',
+            'BAR_RED' : 'rgb(240, 106, 111)' }
 
 function mean(values) {
   let sum = values.reduce(function(sum, value) {
