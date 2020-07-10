@@ -86,3 +86,4 @@ if __name__ == '__main__':
     setup()
     PDB_REPORT_VALUES = load_pdb_report_data()
     scrape_pdb_redo()
+    print('Done.')

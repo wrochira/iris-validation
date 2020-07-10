@@ -53,7 +53,7 @@ DEFAULT_SETTINGS_CONCENTRIC = { 'animation_length' : 250,
                                 'ring_types' : None,
                                 'segment_function_name' : 'handleSegment',
                                 'segment_selector_enabled' : True,
-                                'svg_id' : 'concentric-chart',
+                                'svg_id' : 'concentric',
                                 'svg_hidden' : None }
 
 DEFAULT_SETTINGS_RADAR = { 'canvas_size' : (600, 500),
@@ -109,18 +109,18 @@ def concentric(datapoints, settings={ }):
         if setting_name not in settings.keys():
             settings[setting_name] = setting_default
 
-    if len(settings['ring_names']) is None:
+    if settings['ring_names'] is None:
         settings['ring_names'] = [ '' for _ in range(num_rings) ]
     if len(settings['ring_names']) != num_rings:
         print('ERROR: specified number of ring names is inconsistent with the data')
         return ''
-    if len(settings['ring_types']) is None:
+    if settings['ring_types'] is None:
         settings['ring_types'] = [ 'C' for _ in range(num_rings) ]
     if len(settings['ring_types']) != num_rings:
         print('ERROR: specified number of ring types is inconsistent with the data')
         return ''
     if settings['ring_polarities'] is None:
-        settings['ring_types'] = [ +1 for _ in range(num_rings) ]
+        settings['ring_polarities'] = [ +1 for _ in range(num_rings) ]
     if len(settings['ring_polarities']) != num_rings:
         print('ERROR: specified number of ring polarities is inconsistent with the data')
         return ''
@@ -150,6 +150,27 @@ def concentric(datapoints, settings={ }):
         dwg.attribs['id'] = settings['svg_id']
     if settings['svg_hidden']:
         dwg.attribs['style'] = 'display: none;'
+
+    # Draw axes
+    for ring_id, ring_name in enumerate(settings['ring_names']):
+        ring_color = settings['ring_color_sequence'][ring_id] if settings['ring_types'][ring_id] == 'C' else settings['discrete_ring_color']
+        dwg.add(dwg.circle(r=(ring_id+2)*division_size,
+                           center=center,
+                           fill_opacity=0,
+                           stroke=ring_color,
+                           stroke_width=1,
+                           stroke_opacity=1))
+        dwg.add(dwg.polyline([ _coords_from_angle(center, (gap/float(25))*(i-(20-1)/float(2)), (ring_id+2)*division_size) for i in range(20) ],
+                         stroke=ring_color,
+                         stroke_width=3,
+                         stroke_opacity=1,
+                         fill_opacity=0))
+        dwg.add(dwg.text(text=ring_name,
+                         insert=_coords_from_angle(center, 0, (ring_id+2)*division_size+sizes[1]),
+                         font_size=sizes[1],
+                         font_family='Arial',
+                         text_anchor='middle',
+                         alignment_baseline='central'))
 
     # Get means for continuous metrics; get ranges for discrete metrics
     ring_averages = [ ]
@@ -254,17 +275,14 @@ def concentric(datapoints, settings={ }):
             for segment_id, dp_set in enumerate(datapoints):
                 base_angle = angle_delta * (segment_id+0.5)
                 for version_id, dp in enumerate(dp_set):
-                    segment_length = sizes[0]/2
-                    if dp is None or dp['discrete'] is None or dp['discrete'][ring_id] is None:
-                        segment_color = COLORS['GREEN']
-                        segment_opacity = 0.5
-                    else:
+                    segment_length = sizes[0]
+                    segment_color = settings['discrete_color_sequence'][-1]
+                    segment_opacity = 1
+                    if dp is not None and dp['discrete'] is not None and dp['discrete'][ring_id] is not None:
                         category_id = dp['discrete'][ring_id]
                         segment_color = settings['discrete_color_sequence'][category_id]
+                    if segment_color == settings['discrete_color_sequence'][-1]:
                         segment_opacity = 0.5
-                        if category_id == 0:
-                            segment_opacity = 1
-                            segment_length = sizes[0]
                     segment_points = (_coords_from_angle(center, angle_delta*(segment_id), ring_base_radius - segment_length, gap=gap),
                                       _coords_from_angle(center, angle_delta*(segment_id), ring_base_radius + segment_length, gap=gap),
                                       _coords_from_angle(center, angle_delta*(segment_id+1), ring_base_radius + segment_length, gap=gap),
@@ -310,28 +328,23 @@ def concentric(datapoints, settings={ }):
                 segment_point_groups = discrete_segs_by_rvs[ring_id][version_id]
                 for segment_points, segment_color, segment_opacity in segment_point_groups:
                     segment_group.add(dwg.polyline(segment_points,
-                                                   stroke=segment_color,
                                                    stroke_width=0,
+                                                   stroke_opacity=0,
                                                    fill=segment_color,
                                                    fill_opacity=segment_opacity))
                 dwg.add(segment_group)
 
     # Draw outer markers
     if settings['apply_markers']:
-        marker_groups = [ ]
+        any_markers = False
         for version_id in range(num_versions):
             group_opacity = 1 if version_id == num_versions-1 else 0
             markers_group = dwg.g(id=settings['svg_id'] + '-markers-' + str(version_id), opacity=group_opacity)
             for dp_id, dp_set in enumerate(datapoints):
                 if dp_set[version_id] is None:
                     continue
-                if dp_set[version_id]['marker']:
-                    dwg.add(dwg.text(text=settings['marker_label'],
-                                     insert=_coords_from_angle(center, 0, full_radius-sizes[0]*0.1),
-                                     font_size=sizes[1],
-                                     font_family='Arial',
-                                     text_anchor='middle',
-                                     alignment_baseline='central'))
+                if 'marker' in dp_set[version_id] and dp_set[version_id]['marker'] == True:
+                    any_markers = True
                     markers_group.add(dwg.line(_coords_from_angle(center, angle_delta * (dp_id+0.2), full_radius-sizes[0]*0.1, gap=gap),
                                                _coords_from_angle(center, angle_delta * (dp_id+0.8), full_radius-sizes[0]*0.9, gap=gap),
                                                stroke=settings['marker_color'],
@@ -343,6 +356,13 @@ def concentric(datapoints, settings={ }):
                                                stroke_width=3,
                                                stroke_opacity=1))
             dwg.add(markers_group)
+        if any_markers:
+            dwg.add(dwg.text(text=settings['marker_label'],
+                             insert=_coords_from_angle(center, 0, full_radius-sizes[0]*0.1),
+                             font_size=sizes[1],
+                             font_family='Arial',
+                             text_anchor='middle',
+                             alignment_baseline='central'))
 
     # Draw outer rings
     dwg.add(dwg.circle(r=full_radius-2*sizes[1],
@@ -363,27 +383,6 @@ def concentric(datapoints, settings={ }):
                          stroke=COLORS['BLACK'],
                          stroke_width=1,
                          stroke_opacity=0.5))
-
-    # Draw axes
-    for ring_id, ring_name in enumerate(settings['ring_names']):
-        ring_color = settings['ring_color_sequence'][ring_id] if settings['ring_types'][ring_id] == 'C' else settings['discrete_ring_color']
-        dwg.add(dwg.circle(r=(ring_id+2)*division_size,
-                           center=center,
-                           fill_opacity=0,
-                           stroke=ring_color,
-                           stroke_width=1,
-                           stroke_opacity=1))
-        dwg.add(dwg.polyline([ _coords_from_angle(center, (gap/float(25))*(i-(20-1)/float(2)), (ring_id+2)*division_size) for i in range(20) ],
-                         stroke=ring_color,
-                         stroke_width=3,
-                         stroke_opacity=1,
-                         fill_opacity=0))
-        dwg.add(dwg.text(text=ring_name,
-                         insert=_coords_from_angle(center, 0, (ring_id+2)*division_size+sizes[1]),
-                         font_size=sizes[1],
-                         font_family='Arial',
-                         text_anchor='middle',
-                         alignment_baseline='central'))
 
     # Draw segment selector (if required)
     if settings['segment_selector_enabled']:
@@ -449,7 +448,7 @@ def concentric(datapoints, settings={ }):
     return dwg.tostring()
 
 
-def radar(axis_names, settings={ }):
+def radar(axis_names=('A', 'B', 'C', 'D', 'E'), settings={ }):
     # Check settings
     for setting_name, setting_default in DEFAULT_SETTINGS_RADAR.items():
         if setting_name not in settings.keys():

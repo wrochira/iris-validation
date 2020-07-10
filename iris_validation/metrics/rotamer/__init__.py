@@ -29,7 +29,7 @@ def unpack_bytes(in_bytes):
         import numpy as np
         masks = np.array([ 0b11000000, 0b00110000, 0b00001100, 0b00000011 ])
         shifts = np.array([ 6, 4, 2, 0 ])
-        masked = np.array(in_bytes).reshape(-1,1) & np.array(masks)
+        masked = np.array(in_bytes).reshape(-1, 1) & np.array(masks)
         shifted = masked >> np.array(shifts)
         unpacked = shifted.flatten().astype('int8')
     except ImportError:
@@ -77,9 +77,9 @@ def _cv_sqdiff_scores(code, chis):
         for i in range(len(chis)):
             deltas = (chis[i]-chi_means[i], chis[i]-chi_means[i]+360)
             best_delta = deltas[int(deltas[0]>deltas[1])]
-            sqdiff = (best_delta/chi_sdevs[i])**2
+            sqdiff = (best_delta / chi_sdevs[i])**2
             sqdiffs.append(sqdiff)
-        score = (sum(sqdiffs)/len(sqdiffs))**0.5
+        score = (sum(sqdiffs) / len(sqdiffs))**0.5
         rotamer_scores[rot_name] = score
     return rotamer_scores
 

@@ -6,8 +6,8 @@ from math import pi
 from shutil import rmtree
 from os import mkdir, path
 
-from iris_validation.report.charts import concentric, radar, grid
 from iris_validation.metrics import get_percentile
+from iris_validation.interface.charts import concentric, radar, grid
 from iris_validation.utils import code_three_to_one, needleman_wunsch
 from iris_validation import METRIC_NAMES, METRIC_POLARITIES, METRIC_SHORTNAMES, METRIC_DISPLAY_TYPES, REPORT_METRIC_IDS, REPORT_RESIDUE_VIEW
 
@@ -44,12 +44,14 @@ def _align_chains(model_latest, model_previous):
             model.remove_chain(lost_chain_id)
         print('WARNING: the chain count for the latest model is lower than that of previous models. These lost chains will not be represented in the validation report.')
 
+
 def _clear_non_aa_residues(*models):
     for model in models:
        for chain in model:
             lost_residues = [ residue for residue in chain if not residue.is_aa ]
             for residue in lost_residues:
                 chain.remove_residue(residue)
+
 
 def _generate_chain_sets(model_latest, model_previous):
     chain_sets = { }
@@ -60,6 +62,7 @@ def _generate_chain_sets(model_latest, model_previous):
             if chain.chain_id in chain_sets:
                 chain_sets[chain.chain_id] = [ chain, chain_sets[chain.chain_id][0] ]
     return chain_sets
+
 
 def _get_chain_seqnum_minmax(chain_sets):
     minmax_by_chain = { }
@@ -74,6 +77,7 @@ def _get_chain_seqnum_minmax(chain_sets):
         minmax_by_chain[chain_id] = (minimum, maximum)
     return minmax_by_chain
 
+
 def _get_residue_alignments(chain_sets):
     # TODO: swap out Needleman-Wunsch for some MSA implementation if multiple-model alignment makes it into the release
     alignment_pair_by_chain = { }
@@ -85,6 +89,7 @@ def _get_residue_alignments(chain_sets):
         alignment_pair = needleman_wunsch(sequences[-2], sequences[-1])
         alignment_pair_by_chain[chain_id] = alignment_pair
     return alignment_pair_by_chain
+
 
 def _verify_chain_lengths(*models):
     bad_chain_ids = set()
@@ -101,6 +106,7 @@ def _verify_chain_lengths(*models):
         print('ERROR: no non-null chains in these models')
         return False
     return True
+
 
 def _chart_data_from_models(model_latest, model_previous):
     models = [ model_latest, model_previous ]
@@ -153,11 +159,12 @@ def _chart_data_from_models(model_latest, model_previous):
         chart_data_by_cmr.append(chain_chart_data)
     return chart_data_by_cmr
 
+
 def _concentric_charts_from_data(chart_data):
     molprobity_enabled = chart_data[0][0][-1]['marker'] is not None
     settings = { 'center_text_1' : 'Iris',
                  'center_text_2' : '',
-                 'center_text_3' : '(Molprobity enabled)' if molprobity_enabled else '',
+                 'center_text_3' : '(Molprobity Enabled)' if molprobity_enabled else '',
                  'marker_label' : 'Clashes',
                  'ring_names' : METRIC_SHORTNAMES,
                  'ring_polarities' : METRIC_POLARITIES,
@@ -173,9 +180,11 @@ def _concentric_charts_from_data(chart_data):
         charts.append(chart)
     return charts
 
+
 def _radar_chart():
-    settings = { }
+    settings = { 'axis_names' : METRIC_NAMES }
     return radar(settings)
+
 
 def _grid_chart():
     settings = { 'box_1_label' : 'Ramachandran',
@@ -184,6 +193,7 @@ def _grid_chart():
                  'bar_1_label' : 'Avg. B-factor',
                  'bar_2_label' : 'Sidechain Fit' }
     return grid(settings)
+
 
 def _generate_js_globals(chart_data):
     num_chains = len(chart_data)
@@ -260,6 +270,7 @@ def _generate_js_globals(chart_data):
 
     return js_string
 
+
 def generate_report(model_latest, model_previous, output_dir, mode=''):
     chart_data = _chart_data_from_models(model_latest, model_previous)
 
@@ -281,7 +292,7 @@ def generate_report(model_latest, model_previous, output_dir, mode=''):
     ip2_html = ''.join([ '              ' + concentric_chart + '\n' for concentric_chart in concentric_charts ])[:-1] # [:-1] to remove trailing newline
     ip3_html = '              ' + residue_chart
 
-    report_html = HTML_TEMPLATE_MINIMAL if mode == 'minimal' else HTML_TEMPLATE_I2 if mode == 'i2' else HTML_TEMPLATE
+    report_html = HTML_TEMPLATE_MINIMAL if mode == 'panel' else HTML_TEMPLATE_I2 if mode == 'panel-bc' else HTML_TEMPLATE
     report_html = report_html \
                     .replace('INJECTION_POINT_1', ip1_html) \
                     .replace('INJECTION_POINT_2', ip2_html) \
@@ -296,7 +307,7 @@ def generate_report(model_latest, model_previous, output_dir, mode=''):
     js_interaction = JS_MINIFIED
     js_globals = _generate_js_globals(chart_data)
     # The browser used in CCP4-i2 doesn't support the "let" statement
-    if mode == 'i2':
+    if mode == 'panel-bc':
         js_interaction = js_interaction.replace('let ', 'var ')
         js_globals = js_globals.replace('let ', 'var ')
 

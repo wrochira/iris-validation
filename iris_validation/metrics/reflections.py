@@ -116,7 +116,6 @@ class ReflectionsHandler(object):
                 raise Exception('ColumnError')
             else:
                 self.headers_used = ', '.join(header_hierarchy[import_status])
-                #print('HKL data successfully imported from the column headers: ' + self.headers_used)
             mtzin.close_read()
         except Exception as e:
             print('ERROR: failed to load data from reflections file:', self.f_reflections)

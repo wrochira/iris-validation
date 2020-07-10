@@ -9,6 +9,7 @@ COLORS = {  'L_GREY' : 'rgb(150, 150, 150)',
             'BAR_ORANGE' : 'rgb(247, 212, 134)',
             'BAR_RED' : 'rgb(240, 106, 111)' }
 
+
 function mean(values) {
   let sum = values.reduce(function(sum, value) {
     return sum + value;
@@ -16,6 +17,7 @@ function mean(values) {
   let avg = sum / values.length;
   return avg;
 };
+
 
 function standardDeviation(values) {
   avg = mean(values);
@@ -29,6 +31,7 @@ function standardDeviation(values) {
   return stdDev;
 };
 
+
 function coordsFromAngle(centre, angle, pointRadius) {
   let xc = centre[0];
   let yc = centre[1];
@@ -36,6 +39,7 @@ function coordsFromAngle(centre, angle, pointRadius) {
   let y1 = yc - pointRadius * Math.cos(angle);
   return [Math.round(x1, 2), Math.round(y1, 2)];
 };
+
 
 function scrollToId(elementId) {
   const el = document.getElementById(elementId);
@@ -51,6 +55,7 @@ function scrollToId(elementId) {
   });
 };
 
+
 function toggleModel() {
   if (document.getElementById('model-toggle').checked) {
     selectedModel = 1;
@@ -65,6 +70,7 @@ function toggleModel() {
   setResidueChartRanges();
 };
 
+
 function setChain(chainID) {
   isDragging = false;
   selectedChain = chainID;
@@ -75,6 +81,7 @@ function setChain(chainID) {
   setSelector(selectedChain, selectedResidue);
   setIrisChart(selectedChain);
 };
+
 
 function setIrisChart(chainID) {
   for (var i = 0; i < numChains; ++i) {
@@ -87,6 +94,7 @@ function setIrisChart(chainID) {
     };
   };
 };
+
 
 function setBinarySegments(mode) {
   for (var chainID = 0; chainID < numChains; ++chainID) {
@@ -107,6 +115,7 @@ function setBinarySegments(mode) {
   };
 };
 
+
 function setClashMarkers(mode) {
   for (var chainID = 0; chainID < numChains; ++chainID) {
     let chartID = 'iris-chart-' + chainID;
@@ -123,6 +132,7 @@ function setClashMarkers(mode) {
     };
   };
 };
+
 
 function animatePolyline(mode) {
   for (var chainID = 0; chainID < numChains; ++chainID) {
@@ -141,6 +151,7 @@ function animatePolyline(mode) {
   };
 };
 
+
 function handleSegment(actionID, residueID) {
   if (actionID === 1 || actionID === 2 && isDragging) {
     isDragging = true;
@@ -152,6 +163,7 @@ function handleSegment(actionID, residueID) {
     isDragging = false;
   };
 };
+
 
 function setSelector(chainID, residueID) {
   let chartID = 'iris-chart-' + chainID;
@@ -168,6 +180,7 @@ function setSelector(chainID, residueID) {
     };
   };
 };
+
 
 function clearRadarChart() {
   let radarChart = document.getElementById('radar-chart');
@@ -191,6 +204,7 @@ function clearRadarChart() {
   let summaryEl = document.getElementById('residue-summary');
   summaryEl.textContent = 'Select a residue...';
 };
+
 
 function setRadarChart(modelID, chainID, residueID) {
   let aaCode, seqNum;
@@ -239,6 +253,7 @@ function setRadarChart(modelID, chainID, residueID) {
   summaryEl.textContent = 'Chain ' + String.fromCharCode(65 + chainID) + ', ' + 'Residue ' + seqNum + ' (' + aaCode + ')';
 };
 
+
 function handleRadarChart(actionID, metricID) {
   let floatingLabel = document.getElementById('floating-label-group');
   let floatingLabelTextTop = document.getElementById('floating-label-text-top');
@@ -275,6 +290,7 @@ function handleRadarChart(actionID, metricID) {
   };
 };
 
+
 function getResidueChartDims() {
   let barChartsContainer = document.getElementById('bar-charts-container');
   let bccPoints = [ ];
@@ -286,6 +302,7 @@ function getResidueChartDims() {
   barOffsetY = bccPoints[2][1];
   barMultiplierY = -(bccPoints[2][1]-bccPoints[0][1]) / 100;
 };
+
 
 function setResidueChart(modelID, chainID, residueID) {
   // Get data for checkboxes
@@ -361,6 +378,7 @@ function setResidueChart(modelID, chainID, residueID) {
   document.getElementById('residue-summary').textContent = 'Chain ' + String.fromCharCode(65 + chainID) + ', ' + 'Residue ' + seqNum + ' (' + aaCode + ')';
 };
 
+
 function clearResidueChart() {
   // Clear checkbox backgrounds
   document.getElementById('checkbox-1').setAttribute('fill', COLORS['VL_GREY']);
@@ -374,6 +392,7 @@ function clearResidueChart() {
   // Clear summary text
   document.getElementById('residue-summary').textContent = 'Select a residue...';
 };
+
 
 function getResidueChartRanges() {
   for (var i=0; i<numModels; ++i) {
@@ -408,6 +427,7 @@ function getResidueChartRanges() {
     modelMinMax.push([ [bMean, bLow, bHigh, bMin, bMax], [fitMean, fitLow, fitHigh, fitMin, fitMax] ]);
   };
 };
+
 
 function setResidueChartRanges() {
   // Calculate Ys
@@ -475,9 +495,10 @@ function setResidueChartRanges() {
   // Calculate and set gradient positions
   let gradient1PC = 1 - (modelMinMax[selectedModel][0][0] / (modelMinMax[selectedModel][0][4] - modelMinMax[selectedModel][0][3])).toFixed(3);
   let gradient2PC = 1 - (modelMinMax[selectedModel][1][0] / (modelMinMax[selectedModel][1][4] - modelMinMax[selectedModel][1][3])).toFixed(3);
-  document.getElementById('gradient-1').children[1].setAttribute('offset', gradient1PC);
-  document.getElementById('gradient-2').children[1].setAttribute('offset', gradient2PC);
+  document.getElementById('gradient-1').childNodes[1].setAttribute('offset', gradient1PC);
+  document.getElementById('gradient-2').childNodes[1].setAttribute('offset', gradient2PC);
 };
+
 
 function main() {
   getResidueChartDims();
@@ -488,6 +509,5 @@ function main() {
   };
 };
 
-window.addEventListener('load', function () {
-  main();
-});
+
+window.addEventListener('load', main);

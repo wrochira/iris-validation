@@ -75,6 +75,9 @@ class MetricsModel(object):
                         'rota_outlier' : rota }
                 residue.molprobity_data = rmd
 
+    def get_chain(self, chain_id):
+        return next(chain for chain in self.chains if chain.chain_id == chain_id)
+
     def remove_chain(self, chain_id):
         matching_chains = [ chain for chain in self.chains if chain.chain_id == chain_id ]
         if len(matching_chains) == 0:
@@ -125,6 +128,9 @@ class MetricsChain(object):
             return self.residues[self._index]
         self._index = -1
         raise StopIteration
+
+    def get_residue(self, sequence_number):
+        return next(residue for residue in self.residues if residue.sequence_number == sequence_number)
 
     def remove_residue(self, residue):
         if residue in self.residues:
@@ -179,13 +185,13 @@ class MetricsResidue(object):
             self.psi = None
         self.chis = utils.calculate_chis(mmol_residue)
         self.is_sidechain_complete = SC_INCOMPLETE_STRING not in self.chis
-        self.ramachandran_allowed = utils.get_ramachandran_allowed(mmol_residue, self.phi, self.psi)
-        self.ramachandran_favored = utils.get_ramachandran_favored(mmol_residue, self.phi, self.psi)
-        self.ramachandran_score = utils.calculate_ramachandran_score(mmol_residue, self.phi, self.psi)
-        self.rotamer_score = utils.calculate_rotamer_score(mmol_residue, self.chis) if self.is_sidechain_complete else None
+        self.ramachandran_score = utils.calculate_ramachandran_score(mmol_residue, self.code, self.phi, self.psi)
+        self.ramachandran_allowed = utils.get_ramachandran_allowed(mmol_residue, self.code, self.phi, self.psi)
+        self.ramachandran_favored = utils.get_ramachandran_favored(mmol_residue, self.code, self.phi, self.psi)
+        self.rotamer_score = utils.calculate_rotamer_score(mmol_residue, self.code, self.chis) if self.is_sidechain_complete else None
         self.rotamer_classification, self.rotamer_favored, self.rotamer_allowed = None, None, None
         if self.is_sidechain_complete:
-            self.rotamer_classification = utils.get_rotamer_classification(mmol_residue, self.chis)
+            self.rotamer_classification = utils.get_rotamer_classification(mmol_residue, self.code, self.chis)
             self.rotamer_favored = True if self.rotamer_classification in (-1, 2) else False
             self.rotamer_allowed = False if self.rotamer_classification == 1 else False
         self.max_b_factor, self.avg_b_factor, self.std_b_factor, self.mc_b_factor, self.sc_b_factor = utils.analyse_b_factors(mmol_residue, self.is_aa, self.backbone_atoms)

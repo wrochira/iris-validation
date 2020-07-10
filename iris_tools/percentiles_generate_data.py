@@ -18,8 +18,8 @@ from common import setup, get_available_pdb_ids, load_pdb_report_data, decompres
 
 
 NUM_WORKERS = 16
-YEAR_THRESHOLD = 2015
-NUM_RESULTS_NEEDED = 10000000
+YEAR_THRESHOLD = 2010
+NUM_RESULTS_NEEDED = 100000000
 RESOLUTION_BIN_PERCENTILES = (10, 20, 30, 40, 50, 60, 70, 80, 90)
 OUTPUT_PERCENTILES = tuple([ i+1 for i in range(99) ])
 EXPORT_SERIALISED = True
@@ -30,6 +30,7 @@ RESOLUTION_BINS = { }
 METRIC_VALUES_ALL = { }
 METRIC_VALUES_BINNED = { }
 METRIC_PERCENTILE_VALUES = { }
+NUM_MODELS_ANALYSED = 0
 
 
 def get_resolution_bin_id(resolution):
@@ -82,6 +83,7 @@ def generate_percentiles_data():
     global METRIC_VALUES_ALL
     global METRIC_VALUES_BINNED
     global METRIC_PERCENTILE_VALUES
+    global NUM_MODELS_ANALYSED
     # Add all the avilable PDB IDs to the input queue
     in_queue, out_queue = Queue(), Queue()
     pdb_resolutions = { }
@@ -97,6 +99,7 @@ def generate_percentiles_data():
         except:
             continue
         in_queue.put(pdb_id)
+    print('*** Number of structures: ' + str(len(pdb_resolutions.keys())))
     # Calculate the resolution bins based on all the recorded resolutions
     resolution_bin_values = np.percentile(pdb_resolutions.values(), RESOLUTION_BIN_PERCENTILES)
     for bin_percentile, bin_value in zip(RESOLUTION_BIN_PERCENTILES, resolution_bin_values):
@@ -120,7 +123,7 @@ def generate_percentiles_data():
                 new_process.start()
                 processes.append(new_process)
         num_results = [ sum([ len(y) for y in x.values() ]) for x in METRIC_VALUES_BINNED.values() ]
-        print('*** Num results: ' + str(num_results))
+        print('*** Number of results: ' + str(num_results))
         # Stop if desired number of results have been calculated
         if NUM_RESULTS_NEEDED is not None and min(num_results) >= NUM_RESULTS_NEEDED:
             for p in processes:
@@ -136,6 +139,7 @@ def generate_percentiles_data():
             resolution_bin_id = get_resolution_bin_id(resolution)
             for metric_name, values in results.items():
                 METRIC_VALUES_BINNED[metric_name][resolution_bin_id] += values
+            NUM_MODELS_ANALYSED += 1
         time.sleep(1)
     print('Calculating percentiles...')
     for metric_name in METRIC_NAMES:
@@ -150,10 +154,7 @@ def generate_percentiles_data():
             percentile_values = np.percentile(resolution_metric_values, OUTPUT_PERCENTILES)
             METRIC_PERCENTILE_VALUES[metric_name][resolution_bin_id] = percentile_values
         METRIC_PERCENTILE_VALUES[metric_name]['All'] = np.percentile(METRIC_VALUES_ALL[metric_name], OUTPUT_PERCENTILES)
-    if EXPORT_SERIALISED:
-        print('Exporting serialised data...')
-        with gzip.open(os.path.join(PERCENTILES_OUTPUT_DIR, 'serialised_metrics.gz'), 'wb') as outfile:
-            pickle.dump(METRIC_VALUES_BINNED, outfile)
+    print('Done.')
 
 def export_percentiles_data():
     if not os.path.isdir(PERCENTILES_OUTPUT_DIR):
@@ -182,10 +183,15 @@ def export_percentiles_data():
             outfile.write(','.join([ str(x) for x in line_values ]) + '\n')
     print('Exporting sample sizes...')
     with open(os.path.join(PERCENTILES_OUTPUT_DIR, 'sample_sizes.csv'), 'w') as outfile:
-        outfile.write('Metric Name,Sample Size\n')
+        outfile.write('Metric name,Sample size (residues),Sample size (models)\n')
         for metric_name in METRIC_NAMES:
             num_results = len(METRIC_VALUES_ALL[metric_name])
-            outfile.write(metric_name + ',' + str(num_results) + '\n')
+            outfile.write(metric_name + ',' + str(num_results) + ',' + str(NUM_MODELS_ANALYSED) + '\n')
+    if EXPORT_SERIALISED:
+        print('Exporting serialised data...')
+        with gzip.open(os.path.join(PERCENTILES_OUTPUT_DIR, 'serialised_metrics.gz'), 'wb') as outfile:
+            pickle.dump(METRIC_VALUES_BINNED, outfile)
+    print('Done.')
 
 
 def draw_graphs():
@@ -204,7 +210,7 @@ def draw_graphs():
         ax = plt.gca()
         ax.set_ylabel('Count')
         ax.set_xlabel('Value')
-        ax.set_xlim((0, x_maxima[metric_name]))
+        #ax.set_xlim((0, x_maxima[metric_name]))
         plt.savefig(os.path.join(PERCENTILES_OUTPUT_DIR, 'graphs', metric_name + '_hist_all' + '.png'), dpi=600)
         plt.close()
     print('Generating binned histograms...')
@@ -217,7 +223,7 @@ def draw_graphs():
         ax = plt.gca()
         ax.set_ylabel('Count')
         ax.set_xlabel('Value')
-        ax.set_xlim((0, x_maxima[metric_name]))
+        #ax.set_xlim((0, x_maxima[metric_name]))
         plt.savefig(os.path.join(PERCENTILES_OUTPUT_DIR, 'graphs', metric_name + '_hist_combo.png'), dpi=600)
         plt.close()
         for resolution_bin_id in range(len(RESOLUTION_BIN_PERCENTILES)+1):
@@ -227,9 +233,10 @@ def draw_graphs():
             ax = plt.gca()
             ax.set_ylabel('Count')
             ax.set_xlabel('Value')
-            ax.set_xlim((0, x_maxima[metric_name]))
+            #ax.set_xlim((0, x_maxima[metric_name]))
             plt.savefig(os.path.join(PERCENTILES_OUTPUT_DIR, 'graphs', metric_name + '_hist_bin_' + str(resolution_bin_id) + '.png'), dpi=600)
             plt.close()
+    print('Done.')
 
 
 if __name__ == '__main__':

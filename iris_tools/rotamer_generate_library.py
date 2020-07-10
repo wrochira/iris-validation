@@ -101,7 +101,7 @@ def generate_library():
     dim_num_options = { }
     compressed_classification_bytes = { }
     for code, filename in FILENAMES.items():
-        print(code)
+        print('*** ' + code)
         dim_offsets[code] = [ ]
         dim_bin_ranges[code] = [ ]
         dim_bin_widths[code] = [ ]
@@ -161,6 +161,7 @@ def generate_library():
         pickle.dump(all_data, outfile)
     with gzip.open(COMPRESSED_LIB_PATH, 'wb') as outfile:
         pickle.dump(all_data, outfile)
+    print('Done.')
 
 
 if __name__ == '__main__':

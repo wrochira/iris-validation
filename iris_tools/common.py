@@ -63,8 +63,10 @@ def load_pdb_report_data(force_redownload=False):
     return pdb_report_values
 
 
-def decompress_pdb_redo_dir(pdb_id):
-    for suffix in PDB_REDO_SUFFIXES:
+def decompress_pdb_redo_dir(pdb_id, suffixes=None):
+    for i, suffix in enumerate(PDB_REDO_SUFFIXES):
+        if suffixes is not None and i not in suffixes:
+            continue
         with gzip.open(os.path.join(PDB_REDO_DATA_DIR, pdb_id, pdb_id + suffix + '.gz'), 'rb') as infile:
             with open(os.path.join(PDB_REDO_DATA_DIR, pdb_id, pdb_id + suffix), 'wb') as outfile:
                 shutil.copyfileobj(infile, outfile)

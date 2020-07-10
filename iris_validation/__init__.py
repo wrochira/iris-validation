@@ -3,7 +3,7 @@ Copyright 2020 William Rochira at York Structural Biology Laboratory
 """
 
 from iris_validation._defs import *
-from iris_validation import metrics, report
+from iris_validation import metrics, interface
 
 
 def generate_report(latest_model_path,
@@ -18,4 +18,4 @@ def generate_report(latest_model_path,
     if previous_model_path is not None:
         previous_metrics_model = metrics.generate_metrics_model(previous_model_path, previous_reflections_path)
 
-    report.generate_report(latest_metrics_model, previous_metrics_model, output_dir, mode)
+    interface.generate_report(latest_metrics_model, previous_metrics_model, output_dir, mode)

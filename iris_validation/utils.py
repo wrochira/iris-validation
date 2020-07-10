@@ -78,6 +78,7 @@ def mean(values):
     except:
         return None
 
+
 def median(values):
     values = sorted(values)
     n = len(values)
@@ -87,6 +88,7 @@ def median(values):
     if n % 2 == 1:
         return values[i]
     return mean(values[i-1:i+1])
+
 
 # Approximate CDF for a Gaussian distribution
 def norm_cdf(z_score):
@@ -99,6 +101,7 @@ def norm_cdf(z_score):
         else:
             return 1.0 - exp(-0.5 * z_score**2) / (1.2533141373 * (z_score + sqrt(z_score**2 + 2.546479089470)))
 
+
 # Matrix operations
 def avg_coord(*xyzs):
     num_args = len(xyzs)
@@ -107,39 +110,48 @@ def avg_coord(*xyzs):
     z = sum([ xyz[2] for xyz in xyzs ]) / num_args
     return (x, y, z)
 
+
 def product(x):
     result = 1
     for xi in x:
         result *= xi
     return result
 
+
 def dot_product(xyz1, xyz2):
     return xyz1[0] * xyz2[0] + xyz1[1] * xyz2[1] + xyz1[2] * xyz2[2]
+
 
 def cross_product(xyz1, xyz2):
     return [ xyz1[1] * xyz2[2] - xyz1[2] * xyz2[1],
              xyz1[2] * xyz2[0] - xyz1[0] * xyz2[2],
              xyz1[0] * xyz2[1] - xyz1[1] * xyz2[0] ]
 
+
 def magnitude(xyz):
     return (xyz[0]**2 + xyz[1]**2 + xyz[2]**2) ** 0.5
+
 
 def unit(xyz):
     length = magnitude(xyz)
     return [ xyz[0] / length, xyz[1] / length, xyz[2] / length ]
 
+
 def subtract(xyz1, xyz2):
     return [ xyz1[0] - xyz2[0], xyz1[1] - xyz2[1], xyz1[2] - xyz2[2] ]
+
 
 def distance(xyz1, xyz2):
     v = subtract(xyz1, xyz2)
     return magnitude(v)
+
 
 def angle(xyz1, xyz2, xyz3):
     v1 = subtract(xyz2, xyz1)
     v2 = subtract(xyz2, xyz3)
     angle = math.acos(dot_product(v1, v2) / (magnitude(v1) * magnitude(v2)))
     return math.degrees(angle)
+
 
 def torsion(xyz1, xyz2, xyz3, xyz4, range_positive=False):
     b1 = subtract(xyz2, xyz1)
@@ -156,6 +168,7 @@ def torsion(xyz1, xyz2, xyz3, xyz4, range_positive=False):
     elif not range_positive and angle > 180:
         angle -= 360
     return angle
+
 
 # General functions
 def code_three_to_one(three_letter_codes, strict=False, verbose=False):
@@ -183,6 +196,7 @@ def code_three_to_one(three_letter_codes, strict=False, verbose=False):
                 one_letter_codes += 'X'
     return one_letter_codes
 
+
 def code_one_to_three(one_letter_codes, strict=False, verbose=False):
     three_letter_codes = [ ]
     for olc in one_letter_codes:
@@ -198,6 +212,7 @@ def code_one_to_three(one_letter_codes, strict=False, verbose=False):
             else:
                 three_letter_codes.append('UNK')
     return three_letter_codes
+
 
 def needleman_wunsch(seq1, seq2, match_award=1, mismatch_penalty=-1, gap_penalty=-1):
     n = len(seq1)
@@ -251,12 +266,14 @@ def needleman_wunsch(seq1, seq2, match_award=1, mismatch_penalty=-1, gap_penalty
     alignment1, alignment2 = alignment1[::-1], alignment2[::-1]
     return alignment1, alignment2
 
+
 # (MiniMol) residue functions
 def code_type(mmol_residue):
     try:
         return next(category for category, group in THREE_LETTER_CODES.items() if mmol_residue.type().trim() in group)
     except:
         return None
+
 
 def get_backbone_atoms(mmol_residue):
     try:
@@ -273,6 +290,7 @@ def get_backbone_atoms(mmol_residue):
         c = None
     return n, ca, c
 
+
 def check_backbone_geometry(mmol_residue):
     n, ca, c = get_backbone_atoms(mmol_residue)
     if CLIPPER_MODE == 0:
@@ -288,6 +306,7 @@ def check_backbone_geometry(mmol_residue):
         dist_n_ca = distance(n.coord, ca.coord)
         dist_ca_c = distance(ca.coord, c.coord)
     return dist_n_ca < 1.8 and dist_ca_c < 1.8
+
 
 def calculate_chis(mmol_residue):
     from iris_validation import SC_INCOMPLETE_STRING
@@ -318,6 +337,7 @@ def calculate_chis(mmol_residue):
             xyzs = [ atom.coord for atom in chi_atoms ]
         chis.append(torsion(xyzs[0], xyzs[1], xyzs[2], xyzs[3]))
     return tuple(chis)
+
 
 def analyse_b_factors(mmol_residue, is_aa=None, backbone_atoms=None):
     if CLIPPER_MODE == -1:
@@ -352,6 +372,7 @@ def analyse_b_factors(mmol_residue, is_aa=None, backbone_atoms=None):
     sc_b_avg = mean(sc_b_factors) if is_aa else None
     return b_max, b_avg, b_stdev, mc_b_avg, sc_b_avg
 
+
 def check_is_aa(mmol_residue, strict=False):
     allowed_types = (0,) if strict else (0, 1)
     if code_type(mmol_residue) in allowed_types and \
@@ -360,52 +381,83 @@ def check_is_aa(mmol_residue, strict=False):
         return True
     return False
 
-def calculate_rotamer_probability(mmol_residue, chis=None):
+
+def calculate_rotamer_probability(mmol_residue, code=None, chis=None):
     from .metrics import rotamer
+    if code is None:
+        code = mmol_residue.type().trim()
     if chis is None:
         chis = calculate_chis(mmol_residue)
-    return rotamer.get_probability(mmol_residue.type().trim(), chis)
+    return rotamer.get_probability(code, chis)
 
-def calculate_rotamer_score(mmol_residue, chis=None):
+
+def calculate_rotamer_score(mmol_residue, code=None, chis=None):
     from .metrics import rotamer
+    if code is None:
+        code = mmol_residue.type().trim()
     if chis is None:
         chis = calculate_chis(mmol_residue)
-    return rotamer.get_cv_score(mmol_residue.type().trim(), chis)
+    return rotamer.get_cv_score(code, chis)
 
-def get_rotamer_classification(mmol_residue, chis=None):
+
+def get_rotamer_classification(mmol_residue, code=None, chis=None):
     from .metrics import rotamer
+    if code is None:
+        code = mmol_residue.type().trim()
     if chis is None:
         chis = calculate_chis(mmol_residue)
-    return rotamer.get_classification(mmol_residue.type().trim(), chis)
+    return rotamer.get_classification(code, chis)
 
-def get_ramachandran_allowed(mmol_residue, phi, psi, thresholds=(0.002, 0.02)):
+
+def get_ramachandran_allowed(mmol_residue, code=None, phi=None, psi=None, thresholds=(0.02, 0.002)):
     if CLIPPER_MODE == -1:
         raise ImportError('ERROR: this function requires Clipper-Python')
     if phi is None or psi is None:
         return None
-    rama_function = clipper.Ramachandran(clipper.Ramachandran.Gly5) if mmol_residue.type().trim() == 'GLY' else \
-                    clipper.Ramachandran(clipper.Ramachandran.Pro5) if mmol_residue.type().trim() == 'PRO' else \
+    if code is None:
+        code = mmol_residue.type().trim()
+    rama_function = clipper.Ramachandran(clipper.Ramachandran.Gly5) if code == 'GLY' else \
+                    clipper.Ramachandran(clipper.Ramachandran.Pro5) if code == 'PRO' else \
                     clipper.Ramachandran(clipper.Ramachandran.NonGlyPro5)
     rama_function.set_thresholds(*thresholds)
     return rama_function.allowed(phi, psi)
 
-def get_ramachandran_favored(mmol_residue, phi, psi, thresholds=(0.002, 0.02)):
+
+def get_ramachandran_favored(mmol_residue, code=None, phi=None, psi=None, thresholds=(0.02, 0.002)):
     if CLIPPER_MODE == -1:
         raise ImportError('ERROR: this function requires Clipper-Python')
     if phi is None or psi is None:
         return None
-    rama_function = clipper.Ramachandran(clipper.Ramachandran.Gly5) if mmol_residue.type().trim() == 'GLY' else \
-                    clipper.Ramachandran(clipper.Ramachandran.Pro5) if mmol_residue.type().trim() == 'PRO' else \
+    if code is None:
+        code = mmol_residue.type().trim()
+    rama_function = clipper.Ramachandran(clipper.Ramachandran.Gly5) if code == 'GLY' else \
+                    clipper.Ramachandran(clipper.Ramachandran.Pro5) if code == 'PRO' else \
                     clipper.Ramachandran(clipper.Ramachandran.NonGlyPro5)
     rama_function.set_thresholds(*thresholds)
     return rama_function.favored(phi, psi)
 
-def calculate_ramachandran_score(mmol_residue, phi, psi):
+
+def get_ramachandran_classification(mmol_residue, code=None, phi=None, psi=None, thresholds=(0.02, 0.002)):
     if CLIPPER_MODE == -1:
         raise ImportError('ERROR: this function requires Clipper-Python')
     if phi is None or psi is None:
         return None
-    rama_function = clipper.Ramachandran(clipper.Ramachandran.Gly5) if mmol_residue.type().trim() == 'GLY' else \
-                    clipper.Ramachandran(clipper.Ramachandran.Pro5) if mmol_residue.type().trim() == 'PRO' else \
+    if code is None:
+        code = mmol_residue.type().trim()
+    allowed = get_ramachandran_allowed(None, code, phi, psi, thresholds)
+    favored = get_ramachandran_favored(None, code, phi, psi, thresholds)
+    classification = 3 if favored else 2 if allowed else 1
+    return classification
+
+
+def calculate_ramachandran_score(mmol_residue, code=None, phi=None, psi=None):
+    if CLIPPER_MODE == -1:
+        raise ImportError('ERROR: this function requires Clipper-Python')
+    if phi is None or psi is None:
+        return None
+    if code is None:
+        code = mmol_residue.type().trim()
+    rama_function = clipper.Ramachandran(clipper.Ramachandran.Gly5) if code == 'GLY' else \
+                    clipper.Ramachandran(clipper.Ramachandran.Pro5) if code == 'PRO' else \
                     clipper.Ramachandran(clipper.Ramachandran.NonGlyPro5)
     return rama_function.probability(phi, psi)
