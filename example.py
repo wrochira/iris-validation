@@ -6,7 +6,7 @@ import os
 import sys
 import time
 
-from iris_validation import generate_report
+from iris_validation import make_report
 
 
 if __name__ == '__main__':
@@ -17,4 +17,4 @@ if __name__ == '__main__':
     latest_reflections_path = os.path.join('example_input', '2a0x_final.mtz')
     previous_reflections_path = os.path.join('example_input', '2a0x_0cyc.mtz')
 
-    generate_report(latest_model_path, previous_model_path, latest_reflections_path, previous_reflections_path, './example_report/', mode='')
+    make_report(latest_model_path, previous_model_path, latest_reflections_path, previous_reflections_path, './example_report/', mode='')

@@ -77,7 +77,8 @@ def _cv_sqdiff_scores(code, chis):
         for i in range(len(chis)):
             deltas = (chis[i]-chi_means[i], chis[i]-chi_means[i]+360)
             best_delta = deltas[int(deltas[0]>deltas[1])]
-            sqdiff = (best_delta / chi_sdevs[i])**2
+            z_score = best_delta / chi_sdevs[i]
+            sqdiff = z_score**2
             sqdiffs.append(sqdiff)
         score = (sum(sqdiffs) / len(sqdiffs))**0.5
         rotamer_scores[rot_name] = score
