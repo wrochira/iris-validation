@@ -6,8 +6,10 @@ import shutil
 import itertools
 from multiprocessing import Process, Queue
 
+import numpy as np
 from iotbx import file_reader
 from cStringIO import StringIO
+import matplotlib.pyplot as plt
 from iris_validation import utils
 from mmtbx.validation import ramalyze
 
@@ -15,15 +17,18 @@ from _defs import PDB_REDO_DATA_DIR, TESTING_OUTPUT_DIR
 from common import setup, get_available_pdb_ids, load_pdb_report_data, decompress_pdb_redo_dir, cleanup_pdb_redo_dir, cleanup_all_pdb_redo_dirs
 
 
-NUM_WORKERS = 6
+NUM_WORKERS = 16
 YEAR_THRESHOLD = None
+THRESHOLDS = (0.02, 0.002)
 CLASSIFICATIONS = { 'O' : 1, 'A' : 2, 'F' : 3 }
-CLASSIFICATION_PAIRS = list(itertools.product((1, 2, 3), (1, 2, 3)))
+CATEGORIES = (None, 'Outlier', 'Allowed', 'Favoured')
+CLASSIFICATION_PAIRS = list(itertools.product(CATEGORIES, repeat=2))
 
 PDB_IDS = [ ]
 PDB_REPORT_DATA = { }
 CLASS_RESULTS = { }
 SCORE_RESULTS = { }
+NUM_MODELS_ANALYSED = 0
 
 
 def worker(in_queue, out_queue):
@@ -41,10 +46,10 @@ def worker(in_queue, out_queue):
         output = out.getvalue()
 
         class_results = { }
-        score_results = { }
         for pair in CLASSIFICATION_PAIRS:
             class_results[pair] = 0
-        for clf in (1, 2, 3):
+        score_results = { }
+        for clf in CATEGORIES:
             score_results[clf] = [ ]
 
         for line in output.split('\n'):
@@ -56,26 +61,29 @@ def worker(in_queue, out_queue):
             code = splitline[0].strip()
             if code == 'MSE':
                 code = 'MET'
-            phi, psi = [ float(x) for x in splitline[2:4] if len(x) > 0 ]
+            phi, psi = [ float(x) for x in splitline[2:4] ]
             iris_score = utils.calculate_ramachandran_score(None, code, phi, psi)
-            iris_class_int = 1 if iris_score < 0.002 else 2 if iris_score < 0.02 else 3
+            iris_class_int = 1 if iris_score < THRESHOLDS[1] else 2 if iris_score < THRESHOLDS[0] else 3
+            iris_class = CATEGORIES[iris_class_int]
             if code not in utils.ONE_LETTER_CODES.values():
                 continue
             if iris_class_int == None:
                 continue
             mp_class_char = splitline[-2][0].upper()
             mp_class_int = CLASSIFICATIONS[mp_class_char]
-            class_results[(iris_class_int, mp_class_int)] += 1
-            score_results[mp_class_int].append(iris_score)
+            mp_class = CATEGORIES[mp_class_int]
+            class_results[(iris_class, mp_class)] += 1
+            score_results[mp_class].append(iris_score)
         cleanup_pdb_redo_dir(pdb_id)
         out_queue.put((pdb_id, class_results, score_results))
 
 
 def ramalyze_all():
     global CLASS_RESULTS
+    global NUM_MODELS_ANALYSED
     for pair in CLASSIFICATION_PAIRS:
         CLASS_RESULTS[pair] = 0
-    for clf in (1, 2, 3):
+    for clf in CATEGORIES:
         SCORE_RESULTS[clf] = [ ]
     # Add all the avilable PDB IDs to the input queue
     in_queue, out_queue = Queue(), Queue()
@@ -88,7 +96,6 @@ def ramalyze_all():
         in_queue.put(pdb_id)
     print('Ramalyzing...')
     processes = [ ]
-    num_models_analysed = 0
     while True:
         # Delete references to processes that have died (due to uncatchable Clipper errors)
         processes = [ p for p in processes if p.is_alive() ]
@@ -102,38 +109,39 @@ def ramalyze_all():
         # Stop if all IDs have been processed
         if in_queue.empty() and out_queue.empty():
             break
-        # Collect results from the output Queue
+        # Collect results from the output queue
         while not out_queue.empty():
             pdb_id, class_results, score_results = out_queue.get()
             for pair in CLASSIFICATION_PAIRS:
                 CLASS_RESULTS[pair] += class_results[pair]
-            for clf in (1, 2, 3):
+            for clf in CATEGORIES[1:]:
                 SCORE_RESULTS[clf] += score_results[clf]
-            num_models_analysed += 1
-        print('*** Models analysed: ' + str(num_models_analysed))
+            NUM_MODELS_ANALYSED += 1
+        print('*** Models analysed: ' + str(NUM_MODELS_ANALYSED))
         time.sleep(1)
+
+
+def export_results():
     print('Exporting confusion matrix...')
     with open(os.path.join(TESTING_OUTPUT_DIR, 'rama_clf.csv'), 'w') as outfile:
         outfile.write(',,Iris,,\n')
         outfile.write(',,Outlier,Allowed,Favoured\n')
-        outfile.write('Molprobity,Outlier,' + ','.join([ str(CLASS_RESULTS[(i+1, 1)]) for i in range(3) ]) + '\n')
-        outfile.write(',Allowed,' + ','.join([ str(CLASS_RESULTS[(i+1, 2)]) for i in range(3) ]) + '\n')
-        outfile.write(',Favoured,' + ','.join([ str(CLASS_RESULTS[(i+1, 3)]) for i in range(3) ]) + '\n')
-        outfile.write('\n')
-        outfile.write('Num models,' + str(num_models_analysed))
+        outfile.write('Molprobity')
+        for clf_molprobity in CATEGORIES[1:]:
+            outfile.write(',' + clf_molprobity + ',' + ','.join([ str(CLASS_RESULTS[(clf_iris, clf_molprobity)]) for clf_iris in CATEGORIES[1:] ]) + '\n')
+        outfile.write('\nNum models,' + str(NUM_MODELS_ANALYSED))
     print('Exporting score analyses...')
-    import numpy as np
     with open(os.path.join(TESTING_OUTPUT_DIR, 'rama_scores_summary.csv'), 'w') as outfile:
-        for clf in (1, 2, 3):
+        for clf in CATEGORIES[1:]:
             mean = np.mean(SCORE_RESULTS[clf])
             std = np.std(SCORE_RESULTS[clf])
-            outfile.write(str(clf) + ',' + str(mean) + ',' + str(std) + '\n')
+            outfile.write(clf + ',' + str(mean) + ',' + str(std) + '\n')
     with open(os.path.join(TESTING_OUTPUT_DIR, 'rama_scores_all.csv'), 'w') as outfile:
-        outfile.write('1,2,3\n')
+        outfile.write(','.join(CATEGORIES[1:]) + '\n')
         results_counts = [ len(x) for x in SCORE_RESULTS.values() ]
         for i in range(max(results_counts)):
             outline = ''
-            for clf in (1, 2, 3):
+            for values in SCORE_RESULTS.values():
                 if len(SCORE_RESULTS[clf]) >= i+1:
                     outline += str(SCORE_RESULTS[clf][i])
                 outline += ','
@@ -141,9 +149,24 @@ def ramalyze_all():
     print('Done.')
 
 
+def draw_graphs():
+    print('Making histograms...')
+    for clf in CATEGORIES[1:]:
+        plt.hist(SCORE_RESULTS[clf], bins=100)
+        plt.title('Molprobity ' + clf)
+        ax = plt.gca()
+        ax.set_ylabel('Count')
+        ax.set_xlabel('Clipper Score')
+        ax.set_yscale('log')
+        plt.savefig(os.path.join(TESTING_OUTPUT_DIR, 'rama_hist_' + clf.lower() + '.png'), dpi=600)
+        plt.close()
+
+
 if __name__ == '__main__':
     setup()
     PDB_IDS = get_available_pdb_ids()
     PDB_REPORT_DATA = load_pdb_report_data()
     ramalyze_all()
+    export_results()
+    draw_graphs()
     cleanup_all_pdb_redo_dirs()

@@ -23,6 +23,7 @@ CLASSIFICATION_PAIRS = list(itertools.product((0, 1, 2, 3), (1, 2, 3)))
 PDB_IDS = [ ]
 PDB_REPORT_DATA = { }
 RESULTS = { }
+NUM_MODELS_ANALYSED = 0
 
 
 def worker(in_queue, out_queue):
@@ -61,6 +62,7 @@ def worker(in_queue, out_queue):
 
 def rotalyze_all():
     global RESULTS
+    global NUM_MODELS_ANALYSED
     for pair in CLASSIFICATION_PAIRS:
         RESULTS[pair] = 0
     # Add all the avilable PDB IDs to the input queue
@@ -74,7 +76,6 @@ def rotalyze_all():
         in_queue.put(pdb_id)
     print('Rotalyzing...')
     processes = [ ]
-    num_models_analysed = 0
     while True:
         # Delete references to processes that have died (due to uncatchable Clipper errors)
         processes = [ p for p in processes if p.is_alive() ]
@@ -93,9 +94,12 @@ def rotalyze_all():
             pdb_id, results = out_queue.get()
             for pair in CLASSIFICATION_PAIRS:
                 RESULTS[pair] += results[pair]
-            num_models_analysed += 1
-        print('*** Models analysed: ' + str(num_models_analysed))
+            NUM_MODELS_ANALYSED += 1
+        print('*** Models analysed: ' + str(NUM_MODELS_ANALYSED))
         time.sleep(1)
+
+
+def export_results():
     print('Exporting confusion matrix...')
     with open(os.path.join(TESTING_OUTPUT_DIR, 'rotamer.csv'), 'w') as outfile:
         outfile.write(',,Iris,,,\n')
@@ -104,7 +108,7 @@ def rotalyze_all():
         outfile.write(',Allowed,' + ','.join([ str(RESULTS[(i, 2)]) for i in range(4) ]) + '\n')
         outfile.write(',Favoured,' + ','.join([ str(RESULTS[(i, 3)]) for i in range(4) ]) + '\n')
         outfile.write('\n')
-        outfile.write('Num models,' + str(num_models_analysed))
+        outfile.write('Num models,' + str(NUM_MODELS_ANALYSED))
     print('Done.')
 
 
@@ -113,4 +117,5 @@ if __name__ == '__main__':
     PDB_IDS = get_available_pdb_ids()
     PDB_REPORT_DATA = load_pdb_report_data()
     rotalyze_all()
+    export_results()
     cleanup_all_pdb_redo_dirs()
