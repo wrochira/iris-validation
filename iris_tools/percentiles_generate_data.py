@@ -132,7 +132,7 @@ def generate_percentiles_data():
         # Stop if all IDs have been processed
         if in_queue.empty() and out_queue.empty():
             break
-        # Collect results from the output Queue
+        # Collect results from the output queue
         while not out_queue.empty():
             pdb_id, results = out_queue.get()
             resolution = pdb_resolutions[pdb_id]

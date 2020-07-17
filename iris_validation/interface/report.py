@@ -18,10 +18,10 @@ METRIC_DISPLAY_TYPES = [ METRIC_DISPLAY_TYPES[i] for i in REPORT_METRIC_IDS ]
 
 with open(path.join(path.dirname(path.realpath(__file__)), 'template', 'report.html'), 'r') as infile:
     HTML_TEMPLATE = infile.read()
-with open(path.join(path.dirname(path.realpath(__file__)), 'template', 'report_minimal.html'), 'r') as infile:
-    HTML_TEMPLATE_MINIMAL = infile.read()
-with open(path.join(path.dirname(path.realpath(__file__)), 'template', 'report_i2.html'), 'r') as infile:
-    HTML_TEMPLATE_I2 = infile.read()
+with open(path.join(path.dirname(path.realpath(__file__)), 'template', 'report_panel.html'), 'r') as infile:
+    HTML_TEMPLATE_PANEL = infile.read()
+with open(path.join(path.dirname(path.realpath(__file__)), 'template', 'report_panel_bc.html'), 'r') as infile:
+    HTML_TEMPLATE_PANEL_BC = infile.read()
 with open(path.join(path.dirname(path.realpath(__file__)), 'template', 'js', 'interaction.js'), 'r') as infile:
     JS_MINIFIED = infile.read()
 with open(path.join(path.dirname(path.realpath(__file__)), 'template', 'css', 'minimal.css'), 'r') as infile:
@@ -292,7 +292,7 @@ def generate_report(model_latest, model_previous, output_dir, mode=''):
     ip2_html = ''.join([ '              ' + concentric_chart + '\n' for concentric_chart in concentric_charts ])[:-1] # [:-1] to remove trailing newline
     ip3_html = '              ' + residue_chart
 
-    report_html = HTML_TEMPLATE_MINIMAL if mode == 'panel' else HTML_TEMPLATE_I2 if mode == 'panel-bc' else HTML_TEMPLATE
+    report_html = HTML_TEMPLATE_PANEL if mode == 'panel' else HTML_TEMPLATE_PANEL_BC if mode == 'panel-bc' else HTML_TEMPLATE
     report_html = report_html \
                     .replace('INJECTION_POINT_1', ip1_html) \
                     .replace('INJECTION_POINT_2', ip2_html) \
