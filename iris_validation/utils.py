@@ -409,35 +409,46 @@ def get_rotamer_classification(mmol_residue, code=None, chis=None):
     return rotamer.get_classification(code, chis)
 
 
-def get_ramachandran_allowed(mmol_residue, code=None, phi=None, psi=None, thresholds=(0.02, 0.002)):
+def get_rama_calculator(mmol_residue, code=None):
+    if code is None:
+        code = mmol_residue.type().trim()
+    if code == 'GLY':
+        return clipper.Ramachandran(clipper.Ramachandran.Gly2)
+    elif code == 'PRO':
+        return clipper.Ramachandran(clipper.Ramachandran.Pro2)
+    elif code in ('ILE', 'VAL'):
+        return clipper.Ramachandran(clipper.Ramachandran.IleVal2)
+    else:
+        return clipper.Ramachandran(clipper.Ramachandran.NoGPIVpreP2)
+
+
+def get_ramachandran_allowed(mmol_residue, code=None, phi=None, psi=None, thresholds=None):
     if CLIPPER_MODE == -1:
         raise ImportError('ERROR: this function requires Clipper-Python')
     if phi is None or psi is None:
         return None
     if code is None:
         code = mmol_residue.type().trim()
-    rama_function = clipper.Ramachandran(clipper.Ramachandran.Gly5) if code == 'GLY' else \
-                    clipper.Ramachandran(clipper.Ramachandran.Pro5) if code == 'PRO' else \
-                    clipper.Ramachandran(clipper.Ramachandran.NonGlyPro5)
-    rama_function.set_thresholds(*thresholds)
+    rama_function = get_rama_calculator(None, code)
+    if thresholds is not None:
+        rama_function.set_thresholds(*thresholds)
     return rama_function.allowed(phi, psi)
 
 
-def get_ramachandran_favored(mmol_residue, code=None, phi=None, psi=None, thresholds=(0.02, 0.002)):
+def get_ramachandran_favored(mmol_residue, code=None, phi=None, psi=None, thresholds=None):
     if CLIPPER_MODE == -1:
         raise ImportError('ERROR: this function requires Clipper-Python')
     if phi is None or psi is None:
         return None
     if code is None:
         code = mmol_residue.type().trim()
-    rama_function = clipper.Ramachandran(clipper.Ramachandran.Gly5) if code == 'GLY' else \
-                    clipper.Ramachandran(clipper.Ramachandran.Pro5) if code == 'PRO' else \
-                    clipper.Ramachandran(clipper.Ramachandran.NonGlyPro5)
-    rama_function.set_thresholds(*thresholds)
+    rama_function = get_rama_calculator(None, code)
+    if thresholds is not None:
+        rama_function.set_thresholds(*thresholds)
     return rama_function.favored(phi, psi)
 
 
-def get_ramachandran_classification(mmol_residue, code=None, phi=None, psi=None, thresholds=(0.02, 0.002)):
+def get_ramachandran_classification(mmol_residue, code=None, phi=None, psi=None, thresholds=None):
     if CLIPPER_MODE == -1:
         raise ImportError('ERROR: this function requires Clipper-Python')
     if phi is None or psi is None:
@@ -457,7 +468,5 @@ def calculate_ramachandran_score(mmol_residue, code=None, phi=None, psi=None):
         return None
     if code is None:
         code = mmol_residue.type().trim()
-    rama_function = clipper.Ramachandran(clipper.Ramachandran.Gly5) if code == 'GLY' else \
-                    clipper.Ramachandran(clipper.Ramachandran.Pro5) if code == 'PRO' else \
-                    clipper.Ramachandran(clipper.Ramachandran.NonGlyPro5)
+    rama_function = get_rama_calculator(None, code)
     return rama_function.probability(phi, psi)

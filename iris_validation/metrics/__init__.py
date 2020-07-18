@@ -32,6 +32,10 @@ from iris_validation.metrics.percentiles import get_percentile
 from iris_validation.metrics.reflections import ReflectionsHandler
 
 
+#RAMA_THRESHOLDS = (0.01, 0.0005) # Clipper default
+RAMA_THRESHOLDS = (0.02, 0.002) # Concordant with Coot
+
+
 class MetricsModel(object):
     def __init__(self, mmol_model, reflections_handler=None, multithreaded=True):
         self._index = -1
@@ -186,14 +190,16 @@ class MetricsResidue(object):
         self.chis = utils.calculate_chis(mmol_residue)
         self.is_sidechain_complete = SC_INCOMPLETE_STRING not in self.chis
         self.ramachandran_score = utils.calculate_ramachandran_score(mmol_residue, self.code, self.phi, self.psi)
-        self.ramachandran_allowed = utils.get_ramachandran_allowed(mmol_residue, self.code, self.phi, self.psi)
-        self.ramachandran_favored = utils.get_ramachandran_favored(mmol_residue, self.code, self.phi, self.psi)
+        self.ramachandran_favored = RAMA_THRESHOLDS[0] <= self.ramachandran_score
+        self.ramachandran_allowed = RAMA_THRESHOLDS[1] <= self.ramachandran_score < RAMA_THRESHOLDS[0]
+        self.ramachandran_outlier = self.ramachandran_score < RAMA_THRESHOLDS[1]
         self.rotamer_score = utils.calculate_rotamer_score(mmol_residue, self.code, self.chis) if self.is_sidechain_complete else None
         self.rotamer_classification, self.rotamer_favored, self.rotamer_allowed = None, None, None
         if self.is_sidechain_complete:
-            self.rotamer_classification = utils.get_rotamer_classification(mmol_residue, self.code, self.chis)
-            self.rotamer_favored = True if self.rotamer_classification in (-1, 2) else False
-            self.rotamer_allowed = False if self.rotamer_classification == 1 else False
+            self.rotamer_classification_int = utils.get_rotamer_classification(mmol_residue, self.code, self.chis)
+            self.rotamer_favored = True if self.rotamer_classification_int in (-1, 2) else False
+            self.rotamer_allowed = False if self.rotamer_classification_int == 1 else False
+            self.rotamer_outlier = True if self.rotamer_classification_int == 0 else False
         self.max_b_factor, self.avg_b_factor, self.std_b_factor, self.mc_b_factor, self.sc_b_factor = utils.analyse_b_factors(mmol_residue, self.is_aa, self.backbone_atoms)
         self.fit_score, self.mainchain_fit_score, self.sidechain_fit_score = None, None, None
         reflections_handler = parent.parent.reflections_handler
