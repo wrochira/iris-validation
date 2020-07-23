@@ -18,4 +18,4 @@ def generate_report(latest_model_path,
     if previous_model_path is not None:
         previous_metrics_model = metrics.generate_metrics_model(previous_model_path, previous_reflections_path)
 
-    interface.generate_report(latest_metrics_model, previous_metrics_model, output_dir, mode)
+    interface.build_report(latest_metrics_model, previous_metrics_model, output_dir, mode)

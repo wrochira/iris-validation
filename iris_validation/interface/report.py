@@ -271,7 +271,7 @@ def _generate_js_globals(chart_data):
     return js_string
 
 
-def generate_report(model_latest, model_previous, output_dir, mode=''):
+def build_report(model_latest, model_previous, output_dir, mode=''):
     chart_data = _chart_data_from_models(model_latest, model_previous)
 
     concentric_charts = _concentric_charts_from_data(chart_data)
