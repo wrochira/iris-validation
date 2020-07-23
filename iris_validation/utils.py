@@ -382,33 +382,6 @@ def check_is_aa(mmol_residue, strict=False):
     return False
 
 
-def calculate_rotamer_probability(mmol_residue, code=None, chis=None):
-    from .metrics import rotamer
-    if code is None:
-        code = mmol_residue.type().trim()
-    if chis is None:
-        chis = calculate_chis(mmol_residue)
-    return rotamer.get_probability(code, chis)
-
-
-def calculate_rotamer_score(mmol_residue, code=None, chis=None):
-    from .metrics import rotamer
-    if code is None:
-        code = mmol_residue.type().trim()
-    if chis is None:
-        chis = calculate_chis(mmol_residue)
-    return rotamer.get_cv_score(code, chis)
-
-
-def get_rotamer_classification(mmol_residue, code=None, chis=None):
-    from .metrics import rotamer
-    if code is None:
-        code = mmol_residue.type().trim()
-    if chis is None:
-        chis = calculate_chis(mmol_residue)
-    return rotamer.get_classification(code, chis)
-
-
 def get_rama_calculator(mmol_residue, code=None):
     if code is None:
         code = mmol_residue.type().trim()
@@ -470,3 +443,30 @@ def calculate_ramachandran_score(mmol_residue, code=None, phi=None, psi=None):
         code = mmol_residue.type().trim()
     rama_function = get_rama_calculator(None, code)
     return rama_function.probability(phi, psi)
+
+
+def calculate_rotamer_probability(mmol_residue, code=None, chis=None):
+    from .metrics import rotamer
+    if code is None:
+        code = mmol_residue.type().trim()
+    if chis is None:
+        chis = calculate_chis(mmol_residue)
+    return rotamer.get_probability(code, chis)
+
+
+def calculate_rotamer_score(mmol_residue, code=None, chis=None):
+    from .metrics import rotamer
+    if code is None:
+        code = mmol_residue.type().trim()
+    if chis is None:
+        chis = calculate_chis(mmol_residue)
+    return rotamer.get_cv_score(code, chis)
+
+
+def get_rotamer_classification(mmol_residue, code=None, chis=None):
+    from .metrics import rotamer
+    if code is None:
+        code = mmol_residue.type().trim()
+    if chis is None:
+        chis = calculate_chis(mmol_residue)
+    return rotamer.get_classification(code, chis)

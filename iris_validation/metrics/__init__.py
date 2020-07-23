@@ -196,10 +196,10 @@ class MetricsResidue(object):
         self.rotamer_score = utils.calculate_rotamer_score(mmol_residue, self.code, self.chis) if self.is_sidechain_complete else None
         self.rotamer_classification, self.rotamer_favored, self.rotamer_allowed = None, None, None
         if self.is_sidechain_complete:
-            self.rotamer_classification_int = utils.get_rotamer_classification(mmol_residue, self.code, self.chis)
-            self.rotamer_favored = True if self.rotamer_classification_int in (-1, 2) else False
-            self.rotamer_allowed = False if self.rotamer_classification_int == 1 else False
-            self.rotamer_outlier = True if self.rotamer_classification_int == 0 else False
+            self.rotamer_classification = utils.get_rotamer_classification(mmol_residue, self.code, self.chis)
+            self.rotamer_favored = True if self.rotamer_classification in (-1, 2) else False
+            self.rotamer_allowed = False if self.rotamer_classification == 1 else False
+            self.rotamer_outlier = True if self.rotamer_classification == 0 else False
         self.max_b_factor, self.avg_b_factor, self.std_b_factor, self.mc_b_factor, self.sc_b_factor = utils.analyse_b_factors(mmol_residue, self.is_aa, self.backbone_atoms)
         self.fit_score, self.mainchain_fit_score, self.sidechain_fit_score = None, None, None
         reflections_handler = parent.parent.reflections_handler
