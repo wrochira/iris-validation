@@ -17,3 +17,5 @@ PERCENTILES_OUTPUT_DIR = './data/percentiles/'
 ROTAMER_OUTPUT_DIR = './data/rotamer/'
 TESTING_OUTPUT_DIR = './data/test_results/'
 TIMING_OUTPUT_DIR = './data/timing_results/'
+
+RESOLUTION_BIN_PERCENTILES = (10, 20, 30, 40, 50, 60, 70, 80, 90)

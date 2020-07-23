@@ -9,18 +9,16 @@ import pickle
 from multiprocessing import Process, Queue
 
 import numpy as np
-import matplotlib.pyplot as plt
 from iris_validation.metrics import generate_metrics_model
 from iris_validation import METRIC_NAMES, RESOLUTION_BIN_NAMES
 
-from _defs import PDB_REDO_DATA_DIR, PERCENTILES_OUTPUT_DIR
+from _defs import PDB_REDO_DATA_DIR, PERCENTILES_OUTPUT_DIR, RESOLUTION_BIN_PERCENTILES
 from common import setup, get_available_pdb_ids, load_pdb_report_data, decompress_pdb_redo_dir, cleanup_pdb_redo_dir
 
 
 NUM_WORKERS = 16
 YEAR_THRESHOLD = 2010
 NUM_RESULTS_NEEDED = 100000000
-RESOLUTION_BIN_PERCENTILES = (10, 20, 30, 40, 50, 60, 70, 80, 90)
 OUTPUT_PERCENTILES = tuple([ i+1 for i in range(99) ])
 EXPORT_SERIALISED = True
 
@@ -194,55 +192,9 @@ def export_percentiles_data():
     print('Done.')
 
 
-def draw_graphs():
-    if not os.path.isdir(os.path.join(PERCENTILES_OUTPUT_DIR, 'graphs')):
-        os.mkdir(os.path.join(PERCENTILES_OUTPUT_DIR, 'graphs'))
-    # Get maximum values to set axis limits
-    x_maxima = { }
-    for metric_name in METRIC_NAMES:
-        x_maxima[metric_name] = max(METRIC_VALUES_BINNED[metric_name][resolution_bin_id][-1] for resolution_bin_id in range(len(RESOLUTION_BIN_PERCENTILES)+1))
-    # Generate and export histograms
-    print('Generating overview histograms...')
-    for metric_name in METRIC_NAMES:
-        print('*** ' + metric_name)
-        plt.hist(METRIC_VALUES_ALL[metric_name], bins=1000)
-        plt.title(metric_name)
-        ax = plt.gca()
-        ax.set_ylabel('Count')
-        ax.set_xlabel('Value')
-        #ax.set_xlim((0, x_maxima[metric_name]))
-        plt.savefig(os.path.join(PERCENTILES_OUTPUT_DIR, 'graphs', metric_name + '_hist_all' + '.png'), dpi=600)
-        plt.close()
-    print('Generating binned histograms...')
-    for metric_name in METRIC_NAMES:
-        print('*** ' + metric_name)
-        for resolution_bin_id in range(len(RESOLUTION_BIN_PERCENTILES)+1):
-            values = METRIC_VALUES_BINNED[metric_name][resolution_bin_id]
-            plt.hist(values, bins=1000, alpha=0.25)
-        plt.title(metric_name)
-        ax = plt.gca()
-        ax.set_ylabel('Count')
-        ax.set_xlabel('Value')
-        #ax.set_xlim((0, x_maxima[metric_name]))
-        plt.savefig(os.path.join(PERCENTILES_OUTPUT_DIR, 'graphs', metric_name + '_hist_combo.png'), dpi=600)
-        plt.close()
-        for resolution_bin_id in range(len(RESOLUTION_BIN_PERCENTILES)+1):
-            values = METRIC_VALUES_BINNED[metric_name][resolution_bin_id]
-            plt.hist(values, bins=1000)
-            plt.title(metric_name)
-            ax = plt.gca()
-            ax.set_ylabel('Count')
-            ax.set_xlabel('Value')
-            #ax.set_xlim((0, x_maxima[metric_name]))
-            plt.savefig(os.path.join(PERCENTILES_OUTPUT_DIR, 'graphs', metric_name + '_hist_bin_' + str(resolution_bin_id) + '.png'), dpi=600)
-            plt.close()
-    print('Done.')
-
-
 if __name__ == '__main__':
     setup()
     PDB_IDS = get_available_pdb_ids()
     PDB_REPORT_DATA = load_pdb_report_data()
     generate_percentiles_data()
     export_percentiles_data()
-    draw_graphs()
