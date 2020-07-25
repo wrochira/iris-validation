@@ -493,10 +493,12 @@ function setResidueChartRanges() {
     document.getElementById('boxplot-2-line-high').setAttribute('opacity', 1);
   }
   // Calculate and set gradient positions
+  /*
   let gradient1PC = 1 - (modelMinMax[selectedModel][0][0] / (modelMinMax[selectedModel][0][4] - modelMinMax[selectedModel][0][3])).toFixed(3);
   let gradient2PC = 1 - (modelMinMax[selectedModel][1][0] / (modelMinMax[selectedModel][1][4] - modelMinMax[selectedModel][1][3])).toFixed(3);
   document.getElementById('gradient-1').childNodes[1].setAttribute('offset', gradient1PC);
   document.getElementById('gradient-2').childNodes[1].setAttribute('offset', gradient2PC);
+  */
 };
 
 

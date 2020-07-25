@@ -148,7 +148,7 @@ def _chart_data_from_models(model_latest, model_previous):
                 if residue.molprobity_data is not None:
                     metrics_discrete[rota_index] = None if residue.rotamer_classification is None else 0 if residue.molprobity_data['rota_outlier'] else 2
                     marker = residue.molprobity_data['does_clash']
-                metrics_percentiles = [ get_percentile(metric_id, value, model.resolution, normalise_polarity=True) for metric_id, value in enumerate(metrics_continuous) ]
+                metrics_percentiles = [ get_percentile(metric_id, value, model.resolution, normalise_polarity=True) for metric_id, value in zip(REPORT_METRIC_IDS, metrics_continuous) ]
                 residue_chart_data = { 'continuous' : metrics_continuous,
                                        'discrete' : metrics_discrete,
                                        'marker' : marker,
