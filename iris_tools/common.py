@@ -1,3 +1,7 @@
+"""
+Copyright 2020 William Rochira at York Structural Biology Laboratory
+"""
+
 import os
 import csv
 import gzip

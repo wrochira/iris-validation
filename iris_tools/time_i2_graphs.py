@@ -1,5 +1,11 @@
+"""
+Copyright 2020 William Rochira at York Structural Biology Laboratory
+"""
+
 import os
 
+import numpy as np
+import scipy.stats
 import matplotlib.pyplot as plt
 
 from _defs import PDB_REDO_DATA_DIR, TIMING_OUTPUT_DIR
@@ -7,9 +13,10 @@ from common import setup, load_pdb_report_data, cleanup_all_pdb_redo_dirs
 
 
 PDB_REPORT_DATA = { }
+TIMING_DATA = [ ]
 
 
-def draw_boxplots():
+def load_data():
     data_original_mp = [ ]
     data_original_nomp = [ ]
     data_original_mp_per_res = [ ]
@@ -46,7 +53,62 @@ def draw_boxplots():
                 data_new_mp_per_res.append(time_mp_mean / residue_count)
                 data_new_nomp_per_res.append(time_nomp_mean / residue_count)
 
-    plot_labels = [ 'Old Report', 'New Report\n(Iris and Molprobity)', 'New Report\n(Iris only)' ]
+    return data_original_mp, data_original_nomp, data_original_mp_per_res, data_original_nomp_per_res, data_new_mp, data_new_nomp, data_new_mp_per_res, data_new_nomp_per_res
+
+
+def distribution_info():
+    data_original_mp, data_original_nomp, data_original_mp_per_res, data_original_nomp_per_res, data_new_mp, data_new_nomp, data_new_mp_per_res, data_new_nomp_per_res = TIMING_DATA
+    print()
+    print('Distribution Info - Per Model')
+    print('Original i2 task w/ Molprobity')
+    print('*** Mean:', np.mean(data_original_mp))
+    print('*** Median:', np.median(data_original_mp))
+    print('*** Mode:', scipy.stats.mode(data_original_mp).mode[0])
+    print('*** Stdev:', np.std(data_original_mp))
+    print('Original i2 task w/o Molprobity')
+    print('*** Mean:', np.mean(data_original_nomp))
+    print('*** Median:', np.median(data_original_nomp))
+    print('*** Mode:', scipy.stats.mode(data_original_nomp).mode[0])
+    print('*** Stdev:', np.std(data_original_nomp))
+    print('New i2 task w/ Molprobity')
+    print('*** Mean:', np.mean(data_new_mp))
+    print('*** Median:', np.median(data_new_mp))
+    print('*** Mode:', scipy.stats.mode(data_new_mp).mode[0])
+    print('*** Stdev:', np.std(data_new_mp))
+    print('New i2 task w/o Molprobity')
+    print('*** Mean:', np.mean(data_new_nomp))
+    print('*** Median:', np.median(data_new_nomp))
+    print('*** Mode:', scipy.stats.mode(data_new_nomp).mode[0])
+    print('*** Stdev:', np.std(data_new_nomp))
+    print()
+    print('Distribution Info - Per Residue')
+    print('Original i2 task w/ Molprobity')
+    print('*** Mean:', np.mean(data_original_mp_per_res))
+    print('*** Median:', np.median(data_original_mp_per_res))
+    print('*** Mode:', scipy.stats.mode(data_original_mp_per_res).mode[0])
+    print('*** Stdev:', np.std(data_original_mp_per_res))
+    print('Original i2 task w/o Molprobity')
+    print('*** Mean:', np.mean(data_original_nomp_per_res))
+    print('*** Median:', np.median(data_original_nomp_per_res))
+    print('*** Mode:', scipy.stats.mode(data_original_nomp_per_res).mode[0])
+    print('*** Stdev:', np.std(data_original_nomp_per_res))
+    print('New i2 task w/ Molprobity')
+    print('*** Mean:', np.mean(data_new_mp_per_res))
+    print('*** Median:', np.median(data_new_mp_per_res))
+    print('*** Mode:', scipy.stats.mode(data_new_mp_per_res).mode[0])
+    print('*** Stdev:', np.std(data_new_mp_per_res))
+    print('New i2 task w/o Molprobity')
+    print('*** Mean:', np.mean(data_new_nomp_per_res))
+    print('*** Median:', np.median(data_new_nomp_per_res))
+    print('*** Mode:', scipy.stats.mode(data_new_nomp_per_res).mode[0])
+    print('*** Stdev:', np.std(data_new_nomp_per_res))
+    print()
+
+
+def draw_boxplots():
+    data_original_mp, data_original_nomp, data_original_mp_per_res, data_original_nomp_per_res, data_new_mp, data_new_nomp, data_new_mp_per_res, data_new_nomp_per_res = TIMING_DATA
+
+    plot_labels = [ 'Old Task', 'New Task\n(Iris and Molprobity)', 'New Task\n(Iris only)' ]
     plot_colors = [ 'moccasin', (0.8, 1.0, 0.8), (0.8, 1.0, 0.8) ]
     plot_values = [ [ data_original_mp, data_new_mp, data_new_nomp ],
                     [ data_original_mp_per_res, data_new_mp_per_res, data_new_nomp_per_res ] ]
@@ -61,7 +123,7 @@ def draw_boxplots():
                              widths=0.6)
     axes[0].set_ylim((0, None))
     axes[0].set_ylabel('Time (s)')
-    axes[0].set_title('Run Time by Model')
+    axes[0].set_title('Average Run Time per Model')
 
     bplot2 = axes[1].boxplot(x=plot_values[1],
                              labels=plot_labels,
@@ -71,17 +133,19 @@ def draw_boxplots():
                              widths=0.6)
     axes[1].set_ylim((0, None))
     axes[1].set_ylabel('Time (s)')
-    axes[1].set_title('Run Time by Residue')
+    axes[1].set_title('Average Run Time per Residue')
 
     for bplot in (bplot1, bplot2):
         for patch, color in zip(bplot['boxes'], plot_colors):
             patch.set_facecolor(color)
 
-    plt.savefig(os.path.join(TIMING_OUTPUT_DIR, 'i2_boxplots.png'), dpi=300)
+    plt.savefig(os.path.join(TIMING_OUTPUT_DIR, 'i2_boxplots.png'), dpi=600)
 
 
 if __name__ == '__main__':
     setup()
     PDB_REPORT_DATA = load_pdb_report_data()
+    TIMING_DATA = load_data()
+    distribution_info()
     draw_boxplots()
     cleanup_all_pdb_redo_dirs()
