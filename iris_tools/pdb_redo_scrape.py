@@ -8,13 +8,11 @@ import gzip
 import requests
 from multiprocessing import Process, Queue
 
-from _defs import PDB_REDO_DATA_DIR, PDB_REDO_SUFFIXES
 from common import setup, get_available_pdb_ids, load_pdb_report_data
+from _defs import PDB_REDO_DATA_DIR, PDB_REDO_SUFFIXES, PDB_REDO_UR, PDB_REDO_RECORD_PATH
 
 
 NUM_WORKERS = 16
-PDB_REDO_URL = 'https://pdb-redo.eu/db/'
-PDB_REDO_RECORD_PATH = './data/pdb/pdb_redo_record.csv'
 
 PDB_REPORT_VALUES = { }
 PDB_REDO_RECORD = { }

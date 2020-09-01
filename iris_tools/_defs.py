@@ -7,6 +7,8 @@ import os
 PDB_REPORT_URL = 'https://www.rcsb.org/pdb/rest/customReport.csv?pdbids=*&customReportColumns=structureId,atomSiteCount,structureAuthor,classification,depositionDate,experimentalTechnique,macromoleculeType,ndbId,pdbDoi,releaseDate,residueCount,resolution,revisionDate,structureMolecularWeight,structureTitle&service=wsfile&format=csv'
 PDB_REPORT_PATH = './data/pdb/pdb_report.csv'
 
+PDB_REDO_URL = 'https://pdb-redo.eu/db/'
+PDB_REDO_RECORD_PATH = './data/pdb/pdb_redo_record.csv'
 PDB_REDO_DATA_DIR = os.path.join(os.path.expanduser('~'), 'pdb_redo_files')
 PDB_REDO_SUFFIXES = ('_0cyc.pdb', '_0cyc.mtz', '_final.pdb', '_final.mtz')
 

@@ -11,7 +11,6 @@ import requests
 from _defs import *
 
 
-
 def setup():
     create_data_dirs()
     load_pdb_report_data()
@@ -37,6 +36,20 @@ def get_available_pdb_ids():
                     pdb_ids.append(pdb_id)
     print('Done.')
     return pdb_ids
+
+
+def get_from_pdb_redo(pdb_id, output_dir):
+    pdb_id = pdb_id.lower()
+    check_response = requests.get(PDB_REDO_URL + pdb_id)
+    if check_response.status_code != 200:
+        return False
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
+    for suffix in PDB_REDO_SUFFIXES:
+        response = requests.get(PDB_REDO_URL + pdb_id + '/' + pdb_id + suffix)
+        with open(os.path.join(output_dir, pdb_id + suffix), 'wb') as outfile:
+            outfile.write(response.content)
+    return True
 
 
 def load_pdb_report_data(force_redownload=False):
