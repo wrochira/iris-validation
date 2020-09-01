@@ -1,11 +1,11 @@
 # Iris-Validation
-A Python package for efficiently generating an interactive graphical report for macromolecular structure validation.
+A Python package for interactive all-in-one graphical validation of 3D protein model iterations.
 
 ## metrics
 Calculates comprehensive per-residue metrics from a model (and reflections) file.
 
-## report
-Compiles an HTML validation report.
+## interface
+Generates the HTML validation report.
 
 ## utils
 A number of functions that are utilised extensively within the library and are also useful on their own.
