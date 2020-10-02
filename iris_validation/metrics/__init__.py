@@ -232,9 +232,9 @@ def generate_metrics_model(f_model=None, f_reflections=None, minimol=None, xmap=
             print('WARNING: neither a reflections file path nor a map were specified; continuing in geometry-only mode')
             reflections_handler = None
         else:
-            reflections_handler = ReflectionsHandler(xmap=xmap)
+            reflections_handler = ReflectionsHandler(xmap=xmap, minimol=minimol)
     else:
-        reflections_handler = ReflectionsHandler(f_reflections)
+        reflections_handler = ReflectionsHandler(f_reflections, minimol=minimol)
 
     metrics_model = MetricsModel(minimol, reflections_handler, multithreaded)
     return metrics_model

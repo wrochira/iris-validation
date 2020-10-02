@@ -20,15 +20,13 @@ from iris_validation.utils import ATOMIC_NUMBERS, MC_ATOM_NAMES, norm_cdf
 
 
 class ReflectionsHandler(object):
-    def __init__(self, f_reflections=None, xmap=None, header_mode=0):
+    def __init__(self, f_reflections=None, xmap=None, minimol=None):
         self.f_reflections = f_reflections
         self.xmap = xmap
-        self.header_mode = header_mode
+        self.minimol = minimol
 
         self.hkl = clipper.HKL_info()
-        self.f_phi = clipper.HKL_data_F_phi_float(self.hkl)
 
-        self.headers_used = None
         self.grid = None
         self.spacegroup = None
         self.cell = None
@@ -54,72 +52,39 @@ class ReflectionsHandler(object):
                     print('ERROR: reflections file has unrecognised extension:' + extension)
                 raise Exception('ExtensionError')
             self._load_hkl_data()
+            self._calculate_structure_factors()
             self._generate_xmap()
             self._calculate_map_stats()
 
     def _load_hkl_data(self):
         mtzin = clipper.CCP4MTZfile()
-        try:
-            mtzin.open_read(self.f_reflections)
-            mtzin.import_hkl_info(self.hkl)
-            header_hierarchy = [ ]
-            # Need a better way to choose the right headers, but I'm not familiar enough with reflections data to know what labels are common
-            """
-            labels_and_types = [ tuple(str(line).strip().split(' ')) for line in mtzin.column_labels() ]
-            labels_and_types_by_prefix = { }
-            for column_label, column_type in labels_and_types:
-                label_prefix = '/'.join(column_label.split('/')[:-1])
-                label_suffix = column_label.split('/')[-1]
-                if label_prefix not in labels_and_types_by_prefix:
-                    labels_and_types_by_prefix[label_prefix] = [ ]
-                labels_and_types_by_prefix[label_prefix].append((column_label, column_type))
-            candidate_pair = None
-            for prefix in labels_and_types_by_prefix.keys():
-                column_labels, column_types = zip(*labels_and_types_by_prefix[prefix])
-                F_labels, P_labels, Q_labels = [ ], [ ], [ ]
-                for column_label, column_type in labels_and_types_by_prefix[prefix]:
-                    if column_type == 'F':
-                        F_labels.append(column_label)
-                    if column_type == 'P':
-                        P_labels.append(column_label)
-                    if column_type == 'Q':
-                        Q_labels.append(column_label)
-            if candidate_pair is None:
-                print('ERROR: reflections file does not contain the required columns')
-            """
-            if self.header_mode in (0, 2):
-                header_hierarchy += [ ('F', 'PHI'),
-                                      ('FC', 'PHIC'),
-                                      ('FC_ALL', 'PHIC_ALL') ]
-            if self.header_mode in (0, 1):
-                header_hierarchy += [ ('F', 'SIGF'),
-                                      ('FP', 'SIGFP'),
-                                      ('FP_ALL', 'SIGFP_ALL') ]
-            if CLIPPER_MODE == 0:
-                mtz_labels_and_types = [ tuple(str(line).strip().split(' ')) for line in mtzin.column_labels() ]
-            elif CLIPPER_MODE == 1:
-                mtz_labels_and_types = [ tuple(str(line).strip().split(' ')) for line in mtzin.column_labels ]
-            mtz_column_labels, mtz_column_types = zip(*mtz_labels_and_types)
-            mtz_column_label_suffixes = set([ label.split('/')[-1] for label in mtz_column_labels ])
-            import_status = -1
-            for set_id, suffixes in enumerate(header_hierarchy):
-                if len(set(suffixes) - mtz_column_label_suffixes) == 0:
-                    try:
-                        mtzin.import_hkl_data(self.f_phi, '/*/*/[' + ','.join(suffixes) + ']')
-                        import_status = set_id 
-                        break
-                    except Exception as e:
-                        print('ERROR: failed to import HKL data from reflections file')
-                        raise e
-            if import_status == -1:
-                print('ERROR: reflections file does not contain the required columns')
-                raise Exception('ColumnError')
-            else:
-                self.headers_used = ', '.join(header_hierarchy[import_status])
-            mtzin.close_read()
-        except Exception as e:
-            print('ERROR: failed to load data from reflections file:', self.f_reflections)
-            raise(e)
+        mtzin.open_read(self.f_reflections)
+        mtzin.import_hkl_info(self.hkl)
+
+        if CLIPPER_MODE == 0:
+            mtz_labels_and_types = [ tuple(str(line).strip().split(' ')) for line in mtzin.column_labels() ]
+        elif CLIPPER_MODE == 1:
+            mtz_labels_and_types = [ tuple(str(line).strip().split(' ')) for line in mtzin.column_labels ]
+        mtz_column_labels, mtz_column_types = zip(*mtz_labels_and_types)
+        mtz_column_label_suffixes = set([ label.split('/')[-1] for label in mtz_column_labels ])
+        # Need a better way to choose the right headers, but I'm not familiar enough with reflections data to know what labels are common
+        import_complete = False
+        for suffix_pair in ( ('F', 'SIGF'),
+                             ('FP', 'SIGFP'),
+                             ('FP_ALL', 'SIGFP_ALL') ):
+            if len(mtz_column_label_suffixes & set(suffix_pair)) == 2:
+                try:
+                    self.f_sigf = clipper.HKL_data_F_sigF_float(self.hkl)
+                    mtzin.import_hkl_data(self.f_sigf, '/*/*/[' + ','.join(suffix_pair) + ']')
+                    import_complete = True
+                    break
+                except Exception as e:
+                    print('ERROR: failed to import HKL data from reflections file')
+                    raise(e)
+        if not import_complete:
+            print('ERROR: reflections file does not contain the required columns')
+            raise Exception('ColumnError')
+        mtzin.close_read()
 
         if CLIPPER_MODE == 0:
             spacegroup = self.hkl.spacegroup()
@@ -134,6 +99,14 @@ class ReflectionsHandler(object):
         self.cell = cell
         self.resolution = resolution
         self.resolution_limit = self.resolution.limit()
+
+    def _calculate_structure_factors(self, bulk_solvent=True):
+        #self.crystal = clipper.MTZcrystal()
+        #self.f_phi = clipper.HKL_data_F_phi_float(self.hkl, self.crystal)
+        self.f_phi = clipper.HKL_data_F_phi_float(self.hkl)
+        atoms = self.minimol.atom_list()
+        sf_calc = clipper.SFcalc_obs_bulk_float if bulk_solvent else clipper.SFcalc_obs_base_float
+        sf_calc(self.f_phi, self.f_sigf, atoms)
 
     def _generate_xmap(self):
         self.grid = clipper.Grid_sampling(self.spacegroup, self.cell, self.resolution)
@@ -178,9 +151,9 @@ class ReflectionsHandler(object):
                 element = atom.element.strip()
             atomic_number = ATOMIC_NUMBERS[element]
             density = self.get_density_at_atom(atom)
-            #density_norm = density / atomic_number
-            #atom_score = log(norm_cdf((density_norm - self.map_mean) / self.map_std))
-            atom_score = -log(norm_cdf((density - self.map_mean) / self.map_std) / atomic_number)
+            atom_score = None
+            density_norm = density / atomic_number
+            atom_score = -log(norm_cdf((density_norm - self.map_mean) / self.map_std))
             all_atom_scores.append(atom_score)
             if is_mainchain:
                 mainchain_atom_scores.append(atom_score)
@@ -188,13 +161,10 @@ class ReflectionsHandler(object):
                 sidechain_atom_scores.append(atom_score)
         all_score, mainchain_score, sidechain_score = None, None, None
         if len(all_atom_scores) > 0:
-            all_atom_score_avg = sum(all_atom_scores) / len(all_atom_scores)
-            all_score = all_atom_score_avg * metrics_residue.avg_b_factor
+            all_score = sum(all_atom_scores) / len(all_atom_scores)
         if metrics_residue.is_aa:
             if len(mainchain_atom_scores) > 0:
-                mainchain_atom_score_avg = sum(mainchain_atom_scores) / len(mainchain_atom_scores)
-                mainchain_score = mainchain_atom_score_avg * metrics_residue.mc_b_factor
+                mainchain_score = sum(mainchain_atom_scores) / len(mainchain_atom_scores)
             if len(sidechain_atom_scores) > 0:
-                sidechain_atom_score_avg = sum(sidechain_atom_scores) / len(sidechain_atom_scores)
-                sidechain_score = sidechain_atom_score_avg * metrics_residue.sc_b_factor
+                sidechain_score = sum(sidechain_atom_scores) / len(sidechain_atom_scores)
         return all_score, mainchain_score, sidechain_score
