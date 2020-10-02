@@ -44,32 +44,33 @@ def get_resolution_bin_id(resolution):
 def worker(in_queue, out_queue):
     while True:
         if in_queue.empty():
-            exit()
+            exit(0)
         pdb_id = in_queue.get()
         metric_values = { }
         for metric_name in METRIC_NAMES:
             metric_values[metric_name] = [ ]
         decompress_pdb_redo_dir(pdb_id)
-        model_path = os.path.join(PDB_REDO_DATA_DIR, pdb_id, pdb_id + '_0cyc.pdb')
-        reflections_path = os.path.join(PDB_REDO_DATA_DIR, pdb_id, pdb_id + '_0cyc.mtz')
-        try:
-            metrics_model = generate_metrics_model(model_path, reflections_path)
-        except:
-            continue
+        for suffix in ('_0cyc', '_final'):
+            model_path = os.path.join(PDB_REDO_DATA_DIR, pdb_id, pdb_id + suffix + '.pdb')
+            reflections_path = os.path.join(PDB_REDO_DATA_DIR, pdb_id, pdb_id + suffix + '.mtz')
+            try:
+                metrics_model = generate_metrics_model(model_path, reflections_path)
+            except:
+                continue
+            for chain in metrics_model:
+                for residue in chain:
+                    # Skip non amino acid residues
+                    if not residue.is_aa:
+                        continue
+                    metric_values['Ramachandran Score'].append(residue.ramachandran_score)
+                    metric_values['Rotamer Score'].append(residue.rotamer_score)
+                    metric_values['Avg B-factor'].append(residue.avg_b_factor)
+                    metric_values['Max B-factor'].append(residue.max_b_factor)
+                    metric_values['Std B-factor'].append(residue.std_b_factor)
+                    metric_values['Residue Fit'].append(residue.fit_score)
+                    metric_values['Mainchain Fit'].append(residue.mainchain_fit_score)
+                    metric_values['Sidechain Fit'].append(residue.sidechain_fit_score)
         cleanup_pdb_redo_dir(pdb_id)
-        for chain in metrics_model:
-            for residue in chain:
-                # Skip non amino acid residues
-                if not residue.is_aa:
-                    continue
-                metric_values['Ramachandran Score'].append(residue.ramachandran_score)
-                metric_values['Rotamer Score'].append(residue.rotamer_score)
-                metric_values['Avg B-factor'].append(residue.avg_b_factor)
-                metric_values['Max B-factor'].append(residue.max_b_factor)
-                metric_values['Std B-factor'].append(residue.std_b_factor)
-                metric_values['Residue Fit'].append(residue.fit_score)
-                metric_values['Mainchain Fit'].append(residue.mainchain_fit_score)
-                metric_values['Sidechain Fit'].append(residue.sidechain_fit_score)
         # Discard null values
         for metric_name in metric_values.keys():
             metric_values[metric_name] = [ x for x in metric_values[metric_name] if x is not None ]

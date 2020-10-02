@@ -33,7 +33,7 @@ NUM_MODELS_ANALYSED = 0
 def worker(in_queue, out_queue):
     while True:
         if in_queue.empty():
-            exit()
+            exit(0)
         pdb_id = in_queue.get()
         decompress_pdb_redo_dir(pdb_id, suffixes={0})
         pdb_path = os.path.join(PDB_REDO_DATA_DIR, pdb_id, pdb_id + '_0cyc.pdb')
