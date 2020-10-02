@@ -2,12 +2,12 @@
 Copyright 2020 William Rochira at York Structural Biology Laboratory
 */
 
-COLORS = {  'L_GREY' : 'rgb(150, 150, 150)',
-            'VL_GREY' : 'rgb(200, 200, 200)',
-            'WHITE' : 'rgb(255, 255, 255)',
-            'BAR_GREEN' : 'rgb(90, 237, 141)',
-            'BAR_ORANGE' : 'rgb(247, 212, 134)',
-            'BAR_RED' : 'rgb(240, 106, 111)' }
+const COLORS = {  'L_GREY' : 'rgb(150, 150, 150)',
+                  'VL_GREY' : 'rgb(200, 200, 200)',
+                  'WHITE' : 'rgb(255, 255, 255)',
+                  'BAR_GREEN' : 'rgb(90, 237, 141)',
+                  'BAR_ORANGE' : 'rgb(247, 212, 134)',
+                  'BAR_RED' : 'rgb(240, 106, 111)' };
 
 
 function mean(values) {
@@ -29,6 +29,19 @@ function standardDeviation(values) {
   let variance = mean(squareDiffs);
   let stdDev = Math.sqrt(variance);
   return stdDev;
+};
+
+
+function percentile(values, p) {
+  values = values.sort();
+  var pos = ((values.length) - 1) * p;
+  var base = Math.floor(pos);
+  var rest = pos - base;
+  if( (values[base+1]!==undefined) ) {
+    return values[base] + rest * (values[base+1] - values[base]);
+  } else {
+    return values[base];
+  }
 };
 
 
@@ -62,8 +75,15 @@ function toggleModel() {
   } else {
     selectedModel = 0;
   }
+  // If selected residue is null on the newly-selected model, cycle residues
+  while (discreteMetrics[selectedModel][selectedChain][selectedResidue] === null) {
+    selectedResidue++;
+    selectedResidue = selectedResidue % chainLengths[selectedChain];
+    setSelector(selectedChain, selectedResidue);
+  };
   setBinarySegments(selectedModel);
   setClashMarkers(selectedModel);
+  setShade(selectedModel);
   animatePolyline(selectedModel);
   //setRadarChart(selectedModel, selectedChain, selectedResidue);
   setResidueChart(selectedModel, selectedChain, selectedResidue);
@@ -94,6 +114,29 @@ function setIrisChart(chainID) {
     };
   };
 };
+
+
+/*
+function setChartComponents(mode) {
+  let components = [ 'discrete', 'markers', 'shade' ];
+  for (var componentID = 0; componentID < components.length; ++componentID) {
+    for (var chainID = 0; chainID < numChains; ++chainID) {
+      let chartID = 'iris-chart-' + chainID;
+      let latest = document.getElementById(chartID + '-' + components[componentID] + '-1');
+      let previous = document.getElementById(chartID + '-' + components[componentID] + '-0');
+      if (latest != null && previous != null) {
+        if (mode === 0) {
+          latest.setAttribute('opacity', 0);
+          previous.setAttribute('opacity', 1);
+        } else if (mode === 1) {
+          latest.setAttribute('opacity', 1);
+          previous.setAttribute('opacity', 0);
+        };
+      };
+    };
+  };
+};
+*/
 
 
 function setBinarySegments(mode) {
@@ -128,6 +171,24 @@ function setClashMarkers(mode) {
       } else if (mode === 1) {
         latestMarkers.setAttribute('opacity', 1);
         previousMarkers.setAttribute('opacity', 0);
+      };
+    };
+  };
+};
+
+
+function setShade(mode) {
+  for (var chainID = 0; chainID < numChains; ++chainID) {
+    let chartID = 'iris-chart-' + chainID;
+    let latestShade = document.getElementById(chartID + '-shade-1');
+    let previousShade = document.getElementById(chartID + '-shade-0');
+    if (latestShade != null && previousShade != null) {
+      if (mode === 0) {
+        latestShade.setAttribute('opacity', 0);
+        previousShade.setAttribute('opacity', 1);
+      } else if (mode === 1) {
+        latestShade.setAttribute('opacity', 1);
+        previousShade.setAttribute('opacity', 0);
       };
     };
   };
@@ -417,13 +478,21 @@ function getResidueChartRanges() {
     let bLow = Math.max(0, bMean-bStd);
     let bHigh = Math.min(100, bMean+bStd);
     let bMin = Math.min.apply(null, bAvgs);
+    //let bMin = percentile(bAvgs, 0.05);
+    //let bMin = Math.max(0, bMean-2*bStd);
     let bMax = Math.max.apply(null, bAvgs);
+    //let bMax = percentile(bAvgs, 0.95);
+    //let bMax = Math.min(100, bMean+2*bStd);
     let fitMean = mean(fitSCs);
     let fitStd = standardDeviation(fitSCs);
     let fitLow = Math.max(0, fitMean-fitStd);
     let fitHigh = Math.min(100, fitMean+fitStd);
     let fitMin = Math.min.apply(null, fitSCs);
+    //let fitMin = percentile(fitSCs, 0.05);
+    //let fitMin = Math.max(0, fitMean-2*fitStd);
     let fitMax = Math.max.apply(null, fitSCs);
+    //let fitMax = percentile(fitSCs, 0.95);
+    //let fitMax = Math.min(100, fitMean+2*fitStd);
     modelMinMax.push([ [bMean, bLow, bHigh, bMin, bMax], [fitMean, fitLow, fitHigh, fitMin, fitMax] ]);
   };
 };
