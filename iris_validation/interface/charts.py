@@ -16,6 +16,7 @@ COLORS = { 'BLACK' : 'rgb(0, 0, 0)',
            'WHITE' : 'rgb(255, 255, 255)',
            'RED' : 'rgb(200, 80, 80)',
            'L_RED' : 'rgb(220, 150, 150)',
+           'VL_RED' : 'rgb(255, 235, 235)',
            'GREEN' : 'rgb(50, 200, 50)',
            'L_GREEN' : 'rgb(150, 220, 150)',
            'BLUE' : 'rgb(50, 50, 200)',
@@ -47,6 +48,8 @@ DEFAULT_SETTINGS_CONCENTRIC = { 'animation_length' : 250,
                                 'interaction_segments_enabled' : True,
                                 'marker_label' : '',
                                 'marker_color' : COLORS['RED'],
+                                'missing_data_shade_enabled' : True,
+                                'missing_data_shade_color' : COLORS['VL_RED'],
                                 'ring_color_sequence' : (COLORS['CYAN'], COLORS['MAGENTA'], COLORS['BLUE'], COLORS['ORANGE'], COLORS['CYAN'], COLORS['MAGENTA'], COLORS['BLUE'], COLORS['ORANGE']),
                                 'ring_names' : None,
                                 'ring_polarities' : None,
@@ -334,6 +337,28 @@ def concentric(datapoints, settings={ }):
                                                    fill_opacity=segment_opacity))
                 dwg.add(segment_group)
 
+    # Draw missing-data shade
+    if settings['missing_data_shade_enabled']:
+        for version_id in range(num_versions):
+            group_opacity = 1 if version_id == num_versions-1 else 0
+            shade_group = dwg.g(id=settings['svg_id'] + '-shade-' + str(version_id), opacity=group_opacity)
+            for dp_id, dp_set in enumerate(datapoints):
+                if dp_set[version_id] is None:
+                    shade_group.add(dwg.polygon([ center,
+                                                  _coords_from_angle(center, angle_delta*dp_id, full_radius+5, gap=gap),
+                                                  _coords_from_angle(center, angle_delta*(dp_id+1), full_radius+5, gap=gap) ],
+                                                  stroke_opacity=0,
+                                                  fill=settings['missing_data_shade_color'],
+                                                  fill_opacity=1))
+                    """
+                    shade_group.add(dwg.circle(r=sizes[0]//2,
+                                               center=_coords_from_angle(center, angle_delta*(dp_id+0.5), full_radius-1.5*sizes[1], gap=gap),
+                                               fill=COLORS['BLACK'],
+                                               fill_opacity=1,
+                                               stroke_opacity=0))
+                    """
+            dwg.add(shade_group)
+
     # Draw outer markers
     if settings['apply_markers']:
         any_markers = False
@@ -384,7 +409,7 @@ def concentric(datapoints, settings={ }):
                          stroke_width=1,
                          stroke_opacity=0.5))
 
-    # Draw segment selector (if required)
+    # Draw segment selector
     if settings['segment_selector_enabled']:
         center_point = angle_delta*0.5
         selector_points = (_coords_from_angle(center, center_point, full_radius-1.5*sizes[1], gap=gap),
@@ -400,7 +425,7 @@ def concentric(datapoints, settings={ }):
                             fill_opacity=0.2,
                             id=settings['svg_id'] + '-selector'))
 
-    # Draw interaction segments (if required)
+    # Draw interaction segments
     if settings['interaction_segments_enabled']:
         for i in range(num_segments):
             dwg.add(dwg.polygon([ center,
@@ -754,23 +779,23 @@ def grid(settings={ }):
     box_plot_group_1.add(dwg.line((bar_1_x-bar_width//2, bar_charts_bounds[1]+200),
                                   (bar_1_x+bar_width//2, bar_charts_bounds[1]+200),
                                   stroke=COLORS['BLACK'],
-                                  stroke_width=4,
+                                  stroke_width=2,
                                   stroke_opacity=0.5,
-                                  stroke_dasharray=5,
+                                  stroke_dasharray=2,
                                   id='boxplot-1-line-high'))
     box_plot_group_1.add(dwg.line((bar_1_x-bar_width//2, (bar_charts_bounds[1]+bar_charts_bounds[3])//2),
                                   (bar_1_x+bar_width//2, (bar_charts_bounds[1]+bar_charts_bounds[3])//2),
                                   stroke=COLORS['BLACK'],
-                                  stroke_width=2,
-                                  stroke_opacity=0.5,
-                                  stroke_dasharray=2,
+                                  stroke_width=3,
+                                  stroke_opacity=0.8,
+                                  stroke_dasharray=5,
                                   id='boxplot-1-line-mid'))
     box_plot_group_1.add(dwg.line((bar_1_x-bar_width//2, bar_charts_bounds[3]-200),
                                   (bar_1_x+bar_width//2, bar_charts_bounds[3]-200),
                                   stroke=COLORS['BLACK'],
-                                  stroke_width=4,
+                                  stroke_width=2,
                                   stroke_opacity=0.5,
-                                  stroke_dasharray=5,
+                                  stroke_dasharray=2,
                                   id='boxplot-1-line-low'))
     box_plot_group_1.add(dwg.line((bar_1_x-bar_width//2, bar_charts_bounds[3]),
                                   (bar_1_x+bar_width//2, bar_charts_bounds[3]),
@@ -829,23 +854,23 @@ def grid(settings={ }):
     box_plot_group_2.add(dwg.line((bar_2_x-bar_width//2, bar_charts_bounds[1]+200),
                                   (bar_2_x+bar_width//2, bar_charts_bounds[1]+200),
                                   stroke=COLORS['BLACK'],
-                                  stroke_width=4,
+                                  stroke_width=2,
                                   stroke_opacity=0.5,
-                                  stroke_dasharray=5,
+                                  stroke_dasharray=2,
                                   id='boxplot-2-line-high'))
     box_plot_group_2.add(dwg.line((bar_2_x-bar_width//2, (bar_charts_bounds[1]+bar_charts_bounds[3])//2),
                                   (bar_2_x+bar_width//2, (bar_charts_bounds[1]+bar_charts_bounds[3])//2),
                                   stroke=COLORS['BLACK'],
-                                  stroke_width=2,
-                                  stroke_opacity=0.5,
-                                  stroke_dasharray=2,
+                                  stroke_width=3,
+                                  stroke_opacity=0.8,
+                                  stroke_dasharray=5,
                                   id='boxplot-2-line-mid'))
     box_plot_group_2.add(dwg.line((bar_2_x-bar_width//2, bar_charts_bounds[3]-200),
                                   (bar_2_x+bar_width//2, bar_charts_bounds[3]-200),
                                   stroke=COLORS['BLACK'],
-                                  stroke_width=4,
+                                  stroke_width=2,
                                   stroke_opacity=0.5,
-                                  stroke_dasharray=5,
+                                  stroke_dasharray=2,
                                   id='boxplot-2-line-low'))
     box_plot_group_2.add(dwg.line((bar_2_x-bar_width//2, bar_charts_bounds[3]),
                                   (bar_2_x+bar_width//2, bar_charts_bounds[3]),
