@@ -1,9 +1,9 @@
 Metric name,Sample size (residues),Sample size (models)
-Ramachandran Score,11816849,8488
-Rotamer Score,10000697,8488
-Avg B-factor,11907331,8488
-Max B-factor,11907331,8488
-Std B-factor,11907331,8488
-Residue Fit,11907331,8488
-Mainchain Fit,11907331,8488
-Sidechain Fit,11907331,8488
+Ramachandran Score,16569060,11738
+Rotamer Score,14001563,11738
+Avg B-factor,16695466,11738
+Max B-factor,16695466,11738
+Std B-factor,16695466,11738
+Residue Fit,16695466,11738
+Mainchain Fit,16695466,11738
+Sidechain Fit,16695466,11738
