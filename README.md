@@ -13,3 +13,8 @@ A number of functions that are utilised extensively within the library and are a
 
 # Iris-Tools
 Companion scripts for the main module that include tests, timings, and the scripts used to generate data for the metrics module.
+
+
+# Installation
+The package can now be installed via pip, with the command `pip install iris-validation`.
+At the moment, the Iris package is not compatible with Python 3 under Windows. This is because Clipper-Python, upon which Iris depends, is not currently available for that environment. This will hopefully be remedied soon.

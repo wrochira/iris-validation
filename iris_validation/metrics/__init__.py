@@ -15,17 +15,8 @@ TODO:
 
 import math
 
-try:
-    import clipper
-    CLIPPER_MODE = 0
-except ImportError:
-    try:
-        from clipper_python import _clipper as clipper
-        CLIPPER_MODE = 1
-    except ImportError:
-        raise ImportError('failed to import Clipper-Python')
-
 from iris_validation import utils
+from iris_validation import clipper
 from iris_validation import SC_INCOMPLETE_STRING
 from iris_validation.metrics.rotamer import get_cv_score
 from iris_validation.metrics.percentiles import get_percentile

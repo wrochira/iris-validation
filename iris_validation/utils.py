@@ -4,16 +4,7 @@ Copyright 2020 William Rochira at York Structural Biology Laboratory
 
 import math
 
-try:
-    import clipper
-    CLIPPER_MODE = 0
-except ImportError:
-    try:
-        from clipper_python import _clipper as clipper
-        CLIPPER_MODE = 1
-    except ImportError:
-        print('WARNING: failed to import Clipper-Python, some functions will be unavailable')
-        CLIPPER_MODE = -1
+from iris_validation import clipper
 
 
 THREE_LETTER_CODES = { 0 : [ 'ALA', 'GLY', 'VAL', 'LEU', 'ILE', 'PRO', 'PHE', 'TYR', 'TRP', 'SER',
@@ -293,7 +284,7 @@ def get_backbone_atoms(mmol_residue):
 
 def check_backbone_geometry(mmol_residue):
     n, ca, c = get_backbone_atoms(mmol_residue)
-    if CLIPPER_MODE == 0:
+    if clipper.mode == 0:
         n_co = n.coord_orth()
         ca_co = ca.coord_orth()
         c_co = c.coord_orth()
@@ -302,7 +293,7 @@ def check_backbone_geometry(mmol_residue):
         xyz_c = (c_co.x(), c_co.y(), c_co.z())
         dist_n_ca = distance(xyz_n, xyz_ca)
         dist_ca_c = distance(xyz_ca, xyz_c)
-    elif CLIPPER_MODE == 1:
+    elif clipper.mode == 1:
         dist_n_ca = distance(n.coord, ca.coord)
         dist_ca_c = distance(ca.coord, c.coord)
     return dist_n_ca < 1.8 and dist_ca_c < 1.8
@@ -331,32 +322,32 @@ def calculate_chis(mmol_residue):
         if len(chi_atoms) < 4:
             chis.append(SC_INCOMPLETE_STRING)
             continue
-        if CLIPPER_MODE == 0:
+        if clipper.mode == 0:
             xyzs = [ (atom.coord_orth().x(), atom.coord_orth().y(), atom.coord_orth().z()) for atom in chi_atoms ]
-        elif CLIPPER_MODE == 1:
+        elif clipper.mode == 1:
             xyzs = [ atom.coord for atom in chi_atoms ]
         chis.append(torsion(xyzs[0], xyzs[1], xyzs[2], xyzs[3]))
     return tuple(chis)
 
 
 def analyse_b_factors(mmol_residue, is_aa=None, backbone_atoms=None):
-    if CLIPPER_MODE == -1:
+    if clipper.mode == -1:
         raise ImportError('ERROR: this function requires Clipper-Python')
     if is_aa is None:
         is_aa = check_is_aa(mmol_residue)
     if backbone_atoms is None:
         backbone_atoms = get_backbone_atoms(mmol_residue)
     if is_aa:
-        if CLIPPER_MODE == 0:
+        if clipper.mode == 0:
             backbone_atom_ids = set([ str(atom.id()).strip() for atom in backbone_atoms ])
-        elif CLIPPER_MODE == 1:
+        elif clipper.mode == 1:
             backbone_atom_ids = set([ str(atom.id).strip() for atom in backbone_atoms ])
     residue_b_factors, mc_b_factors, sc_b_factors = [ ], [ ], [ ]
     for atom in mmol_residue:
-        if CLIPPER_MODE == 0:
+        if clipper.mode == 0:
             atom_id = str(atom.id()).strip()
             bf = clipper.Util_u2b(atom.u_iso())
-        elif CLIPPER_MODE == 1:
+        elif clipper.mode == 1:
             atom_id = str(atom.id).strip()
             bf = clipper.Util_u2b(atom.u_iso)
         residue_b_factors.append(bf)
@@ -396,7 +387,7 @@ def get_rama_calculator(mmol_residue, code=None):
 
 
 def get_ramachandran_allowed(mmol_residue, code=None, phi=None, psi=None, thresholds=None):
-    if CLIPPER_MODE == -1:
+    if clipper.mode == -1:
         raise ImportError('ERROR: this function requires Clipper-Python')
     if phi is None or psi is None:
         return None
@@ -409,7 +400,7 @@ def get_ramachandran_allowed(mmol_residue, code=None, phi=None, psi=None, thresh
 
 
 def get_ramachandran_favored(mmol_residue, code=None, phi=None, psi=None, thresholds=None):
-    if CLIPPER_MODE == -1:
+    if clipper.mode == -1:
         raise ImportError('ERROR: this function requires Clipper-Python')
     if phi is None or psi is None:
         return None
@@ -422,7 +413,7 @@ def get_ramachandran_favored(mmol_residue, code=None, phi=None, psi=None, thresh
 
 
 def get_ramachandran_classification(mmol_residue, code=None, phi=None, psi=None, thresholds=None):
-    if CLIPPER_MODE == -1:
+    if clipper.mode == -1:
         raise ImportError('ERROR: this function requires Clipper-Python')
     if phi is None or psi is None:
         return None
@@ -435,7 +426,7 @@ def get_ramachandran_classification(mmol_residue, code=None, phi=None, psi=None,
 
 
 def calculate_ramachandran_score(mmol_residue, code=None, phi=None, psi=None):
-    if CLIPPER_MODE == -1:
+    if clipper.mode == -1:
         raise ImportError('ERROR: this function requires Clipper-Python')
     if phi is None or psi is None:
         return None

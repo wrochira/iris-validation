@@ -6,16 +6,7 @@ import os
 import sys
 from math import exp, log, sqrt
 
-try:
-    import clipper
-    CLIPPER_MODE = 0
-except ImportError:
-    try:
-        from clipper_python import _clipper as clipper
-        CLIPPER_MODE = 1
-    except ImportError:
-        raise ImportError('failed to import Clipper-Python')
-
+from iris_validation import clipper
 from iris_validation.utils import ATOMIC_NUMBERS, MC_ATOM_NAMES, norm_cdf
 
 
@@ -61,9 +52,9 @@ class ReflectionsHandler(object):
         mtzin.open_read(self.f_reflections)
         mtzin.import_hkl_info(self.hkl)
 
-        if CLIPPER_MODE == 0:
+        if clipper.mode == 0:
             mtz_labels_and_types = [ tuple(str(line).strip().split(' ')) for line in mtzin.column_labels() ]
-        elif CLIPPER_MODE == 1:
+        elif clipper.mode == 1:
             mtz_labels_and_types = [ tuple(str(line).strip().split(' ')) for line in mtzin.column_labels ]
         mtz_column_labels, mtz_column_types = zip(*mtz_labels_and_types)
         mtz_column_label_suffixes = set([ label.split('/')[-1] for label in mtz_column_labels ])
@@ -86,11 +77,11 @@ class ReflectionsHandler(object):
             raise Exception('ColumnError')
         mtzin.close_read()
 
-        if CLIPPER_MODE == 0:
+        if clipper.mode == 0:
             spacegroup = self.hkl.spacegroup()
             cell = self.hkl.cell()
             resolution = self.hkl.resolution()
-        elif CLIPPER_MODE == 1:
+        elif clipper.mode == 1:
             spacegroup = self.hkl.spacegroup
             cell = self.hkl.cell
             resolution = self.hkl.resolution
@@ -122,10 +113,10 @@ class ReflectionsHandler(object):
         self.map_std = map_stats.std_dev()
 
     def get_density_at_point(self, xyz):
-        if CLIPPER_MODE == 0:
+        if clipper.mode == 0:
             cell = self.xmap.cell()
             grid = self.xmap.grid_sampling()
-        elif CLIPPER_MODE == 1:
+        elif clipper.mode == 1:
             cell = self.xmap.cell
             grid = self.xmap.grid_sampling
         co = clipper.Coord_orth(*xyz)
@@ -134,10 +125,10 @@ class ReflectionsHandler(object):
         return density
 
     def get_density_at_atom(self, mmol_atom):
-        if CLIPPER_MODE == 0:
+        if clipper.mode == 0:
             co = mmol_atom.coord_orth()
             xyz = (co.x(), co.y(), co.z())
-        elif CLIPPER_MODE == 1:
+        elif clipper.mode == 1:
             xyz = mmol_atom.coord
         return self.get_density_at_point(xyz)
 
@@ -145,9 +136,9 @@ class ReflectionsHandler(object):
         all_atom_scores, mainchain_atom_scores, sidechain_atom_scores = [ ], [ ], [ ]
         for atom_id, atom in enumerate(metrics_residue.minimol_residue):
             is_mainchain = str(atom.name()).strip() in MC_ATOM_NAMES
-            if CLIPPER_MODE == 0:
+            if clipper.mode == 0:
                 element = str(atom.element()).strip()
-            elif CLIPPER_MODE == 1:
+            elif clipper.mode == 1:
                 element = atom.element.strip()
             atomic_number = ATOMIC_NUMBERS[element]
             density = self.get_density_at_atom(atom)
