@@ -98,7 +98,7 @@ def _verify_chain_lengths(*models):
             if chain.length == 0:
                 bad_chain_ids.add(chain.chain_id)
     if len(bad_chain_ids) > 0:
-        print('WARNING: at least one chain contains no amino acid residues. Removing chains: ' + ', '.join(bad_chain_ids))
+        print('WARNING: at least one chain contains no amino acid residues. Ignoring chains: ' + ', '.join(sorted(bad_chain_ids)))
         for model in models:
             for chain_id in bad_chain_ids:
                 model.remove_chain(chain_id)
