@@ -16,10 +16,7 @@ from iris_tools.common import get_from_pdb_redo
 INPUT_DIR = 'example_input'
 OUTPUT_DIR_PREFIX = 'example_report'
 
-
 if __name__ == '__main__':
-    sys.dont_write_bytecode = True
-
     pdb_id = raw_input('Enter PDB code: ')
 
     latest_model_path = os.path.join(INPUT_DIR, pdb_id + '_final.pdb')
