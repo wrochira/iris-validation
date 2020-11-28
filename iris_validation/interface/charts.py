@@ -106,7 +106,12 @@ def concentric(datapoints, settings={ }):
 
     num_segments = len(datapoints)
     num_versions = len(datapoints[0])
-    num_rings = len(datapoints[0][0]['continuous'])
+    num_rings = None
+    for i in range(num_segments):
+        if datapoints[i][0] is not None:
+            num_rings = len(datapoints[i][0]['continuous'])
+            break
+
 
     for setting_name, setting_default in DEFAULT_SETTINGS_CONCENTRIC.items():
         if setting_name not in settings.keys():

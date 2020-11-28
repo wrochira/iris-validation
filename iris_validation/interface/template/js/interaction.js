@@ -95,6 +95,12 @@ function setChain(chainID) {
   isDragging = false;
   selectedChain = chainID;
   selectedResidue = 0;
+  // If selected residue is null on the newly-selected model, cycle residues
+  while (discreteMetrics[selectedModel][selectedChain][selectedResidue] === null) {
+    selectedResidue++;
+    selectedResidue = selectedResidue % chainLengths[selectedChain];
+    setSelector(selectedChain, selectedResidue);
+  };
   //clearRadarChart();
   //clearResidueChart();
   setResidueChart(selectedModel, selectedChain, selectedResidue);

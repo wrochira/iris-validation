@@ -41,7 +41,7 @@ def _align_chains(model_latest, model_previous):
     lost_chains = set(previous_chain_ids) - set(latest_chain_ids)
     if len(lost_chains) > 0:
         for lost_chain_id in lost_chains:
-            model.remove_chain(lost_chain_id)
+            model_previous.remove_chain(lost_chain_id)
         print('WARNING: the chain count for the latest model is lower than that of previous models. These lost chains will not be represented in the validation report.')
 
 
@@ -198,7 +198,7 @@ def _grid_chart():
 def _generate_js_globals(chart_data):
     num_chains = len(chart_data)
     num_models = len(chart_data[0][0])
-    num_metrics = len(chart_data[0][0][0])
+    num_metrics = len(REPORT_METRIC_IDS)
     num_residues_by_chain = [ len(chain_data) for chain_data in chart_data ]
 
     js_string = '// Variables\n'
